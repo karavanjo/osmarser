@@ -105,6 +105,28 @@ namespace Osm
         private Dictionary<Int64, Int64> _geosDb;
     }
 
+    /// <summary>
+    /// The parent class for Nodes, Ways and Relations
+    /// </summary>
+    public class Geo
+    {
+        public Geo(Int64 id, Int64 timestamp)
+        {
+            this.Id = id;
+            this.Timestamp = timestamp;
+            this.HashTags = new List<int>();
+        }
+
+        public void AddTagHash(Int32 hashTag)
+        {
+            this.HashTags.Add(hashTag);
+        }
+
+        public Int64 Id { get; set; }
+        public Int64 Timestamp { get; set; }
+
+        public List<Int32> HashTags;
+    }
 
 
 
