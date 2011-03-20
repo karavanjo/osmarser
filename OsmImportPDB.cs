@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
 using System.IO;
@@ -38,6 +39,7 @@ namespace Osm
         {
             _importConfigurator = new OsmImportConfigurator(pathFileConfig);
         }
+        
 
         /// <summary>
         /// Deserializes to the level of primitive blocks (PrimitiveBlock)
@@ -86,7 +88,7 @@ namespace Osm
         /// Reads and parses a primitive block (PrimitiveBlock)
         /// </summary>
         /// <param name="primitiveBlock">Primitive block to parse</param>
-        private void ReadPrimitiveBlock (PrimitiveBlock primitiveBlock)
+        private void ReadPrimitiveBlock(PrimitiveBlock primitiveBlock)
         {
             double latOffset = .000000001 * primitiveBlock.lat_offset;
             double lonOffset = .000000001 * primitiveBlock.lon_offset;
@@ -203,23 +205,43 @@ namespace Osm
         /// Reads and parses a relations (OSMPBF.Relation)
         /// </summary>
         /// <param name="relations">An array of relations</param>
-        public void ReadRelations (List<OSMPBF.Relation> relations)
+        public void ReadRelations(List<OSMPBF.Relation> relations)
         {
             for (int r = 0; r < relations.Count; r++)
             {
-                
+
             }
         }
 
+        /// <summary>
+        /// Loads the dictionary _geodb data id and timestamp geography objects in the database
+        /// </summary>
         public void DownloadDataFromDB()
         {
-            //ConfigurationManager 
+            string connectionString =
+                            ConfigurationManager.ConnectionStrings
+                            [_importConfigurator.DataBaseConfig.ConnectionStringName].ToString();
+
+            using (SqlConnection sqlConnection = new SqlConnection(connectionString))
+            {
+                SqlCommand sqlCommand = new SqlCommand
+                    ("SELECT idGeo AS id, timestampGeo AS times FROM " + _importConfigurator.DataBaseConfig.TableNameGeo,
+                    sqlConnection);
+                sqlConnection.Open();
+                SqlDataReader dataReader = sqlCommand.ExecuteReader();
+                while (dataReader.Read())
+                {
+                    this._geoDB.AddGeoFromDb(Convert.ToInt64(dataReader["id"]),
+                        Convert.ToInt64(dataReader["times"]));
+                }
+                dataReader.Close();
+            }
         }
 
         /// <summary>
         /// Stores the image data from database
         /// </summary>
-        private GeoDb _geoDB;
+        private GeoDb _geoDB = new GeoDb();
         /// <summary>
         /// Stores a reference to the current configurator imports
         /// </summary>
