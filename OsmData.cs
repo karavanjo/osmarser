@@ -13,7 +13,7 @@ namespace Osm
     }
 
     /// <summary>
-    /// Stores all the nodes
+    /// Stores all the nodes geography data
     /// </summary>
     public class Nodes
     {
@@ -41,7 +41,7 @@ namespace Osm
     }
 
     /// <summary>
-    /// Stores all the Ways
+    /// Stores all the Ways geography data
     /// </summary>
     public class Ways
     {
