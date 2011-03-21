@@ -37,10 +37,29 @@ namespace Osm
 
         #region Public methods
         /// <summary>
+        /// Returns the type in which to store the tag value
+        /// </summary>
+        /// <param name="tagHash">Tag Name Hash</param>
+        /// <returns>Enumerator value ("Hash", "String", "Int" etc.)</returns>
+        public TypeValueTag GetTypeValueTag(int tagHash)
+        {
+            if (_tags.Keys.Contains(tagHash))
+            {
+                return _tags[tagHash];
+            }
+            else
+            {
+                return TypeValueTag.Hash;
+            }
+        }
+        #endregion
+
+        #region Private methods
+        /// <summary>
         /// Handles section "database" section and fills _tags
         /// </summary>
         /// <param name="databaseSection"></param>
-        public void ProcessDatabaseSection(XElement databaseSection)
+        private void ProcessDatabaseSection(XElement databaseSection)
         {
             if (XmlUtility.IsExistElementsInXElement(databaseSection))
             {
@@ -99,27 +118,6 @@ namespace Osm
                 }
             }
         }
-
-        /// <summary>
-        /// Returns the type in which to store the tag value
-        /// </summary>
-        /// <param name="tagHash">Tag Name Hash</param>
-        /// <returns>Enumerator value ("Hash", "String", "Int" etc.)</returns>
-        public TypeValueTag GetTypeValueTag(int tagHash)
-        {
-            if (_tags.Keys.Contains(tagHash))
-            {
-                return _tags[tagHash];
-            }
-            else
-            {
-                return TypeValueTag.Hash;
-            }
-        }
-        #endregion
-
-        #region Private methods
-
 
         /// <summary>
         /// Handles section "tags" section and fills _tags
@@ -222,7 +220,7 @@ namespace Osm
     }
 
     /// <summary>
-    /// The class that displays the configuration file in section 'database'
+    /// The class that maps the configuration file in section 'database'
     /// </summary>
     public class DatabaseConfig
     {
