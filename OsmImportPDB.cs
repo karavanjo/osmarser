@@ -11,7 +11,7 @@ using ProtoBuf;
 namespace Osm
 {
     /// <summary>
-    /// Class that performs the import file .pdb database SQL Server
+    /// Class that performs the import file .pdb in EMPTY database SQL Server
     /// </summary>
     public class OsmImportPDB
     {
@@ -211,6 +211,31 @@ namespace Osm
             {
 
             }
+        }
+
+        /// <summary>
+        /// Determines whether to import into a database object based on configuration file import
+        /// </summary>
+        /// <param name="geo">Node, Way or Relation</param>
+        /// <returns></returns>
+        public bool IsImportInDb(Geo geo)
+        {
+            bool imported = false;
+            if (geo.HashTags != null)
+            {
+                foreach (int hashTag in geo.HashTags)
+                {
+                    if (_importConfigurator.GetTypeValueTag(hashTag) != TypeValueTag.NoImport)
+                    {
+                        return true;
+                    }
+                }
+            }
+            else
+            {
+                return false;
+            }
+            return imported;
         }
         
         /// <summary>
