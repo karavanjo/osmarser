@@ -15,6 +15,7 @@ namespace Osm
     /// </summary>
     class OsmImportConfigurator
     {
+        #region Constructor
         /// <summary>
         /// Constructor OsmImportConfigurator
         /// </summary>
@@ -32,7 +33,9 @@ namespace Osm
                 throw new FileNotFoundException("Import the configuration file not found!");
             }
         }
+        #endregion
 
+        #region Public methods
         /// <summary>
         /// Handles section "database" section and fills _tags
         /// </summary>
@@ -97,7 +100,26 @@ namespace Osm
             }
         }
 
-        public DatabaseConfig DataBaseConfig { get; set; }
+        /// <summary>
+        /// Returns the type in which to store the tag value
+        /// </summary>
+        /// <param name="tagHash">Tag Name Hash</param>
+        /// <returns>Enumerator value ("Hash", "String", "Int" etc.)</returns>
+        public TypeValueTag GetTypeValueTag(int tagHash)
+        {
+            if (_tags.Keys.Contains(tagHash))
+            {
+                return _tags[tagHash];
+            }
+            else
+            {
+                return TypeValueTag.Hash;
+            }
+        }
+        #endregion
+
+        #region Private methods
+
 
         /// <summary>
         /// Handles section "tags" section and fills _tags
@@ -136,25 +158,16 @@ namespace Osm
                 }
             }
         }
+        #endregion
 
+        #region Properties
         /// <summary>
-        /// Returns the type in which to store the tag value
+        /// Stores the configuration database
         /// </summary>
-        /// <param name="tagHash">Tag Name Hash</param>
-        /// <returns>Enumerator value ("Hash", "String", "Int" etc.)</returns>
-        public TypeValueTag GetTypeValueTag(int tagHash)
-        {
-            if (_tags.Keys.Contains(tagHash))
-            {
-                return _tags[tagHash];
-            }
-            else
-            {
-                return TypeValueTag.Hash;
-            }
-        }
+        public DatabaseConfig DataBaseConfig { get; set; }
+        #endregion
 
-
+        #region Private Fields
         /// <summary>
         /// Stores the tag values ​​from tag data types and possible / impossible to import
         /// </summary>
@@ -163,6 +176,7 @@ namespace Osm
         /// Stores all the configuration file
         /// </summary>
         private XDocument _osmConfig;
+        #endregion
     }
 
 
@@ -256,7 +270,7 @@ namespace Osm
             _relations = new Dictionary<int, GeoTypeOGC>();
         }
 
-        private void ProcessSectionGeoTypeOsm(XElement xGeoOsm, Dictionary<int,GeoTypeOGC> geoOsm)
+        private void ProcessSectionGeoTypeOsm(XElement xGeoOsm, Dictionary<int, GeoTypeOGC> geoOsm)
         {
             if (XmlUtility.IsExistAttributesInXElement(xGeoOsm))
             {
