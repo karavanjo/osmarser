@@ -59,7 +59,7 @@ namespace Osm
                     XElement xTableNameValues = xTables.Element("values");
                     if (XmlUtility.IsExistAttributesInXElement(xTableNameValues))
                     {
-                        tableNameValues = xConnString.Attribute("name").Value;
+                        tableNameValues = xTableNameValues.Attribute("name").Value;
                     }
                     else
                     {
@@ -69,7 +69,7 @@ namespace Osm
                     XElement xTableNameGeo = xTables.Element("geo");
                     if (XmlUtility.IsExistAttributesInXElement(xTableNameGeo))
                     {
-                        tableNameGeo = xTableNameGeo.Attribute("geo").Value;
+                        tableNameGeo = xTableNameGeo.Attribute("name").Value;
                     }
                     else
                     {
@@ -81,7 +81,7 @@ namespace Osm
                     throw new XmlException("Element <tables>  not found or does not contain elements");
                 }
 
-                if (String.IsNullOrEmpty(connectionString) && String.IsNullOrEmpty(tableNameGeo) && String.IsNullOrEmpty(tableNameValues))
+                if (!String.IsNullOrEmpty(connectionString) || !String.IsNullOrEmpty(tableNameGeo) || !String.IsNullOrEmpty(tableNameValues))
                 {
                     DataBaseConfig = new DatabaseConfig()
                                          {
