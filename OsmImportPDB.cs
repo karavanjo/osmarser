@@ -237,7 +237,11 @@ namespace Osm
             }
             return imported;
         }
-        
+
+        /// <summary>
+        /// Stores hashes of tags / values​​ and their OSM names
+        /// </summary>
+        private Dictionary<int, string> _tagsValuesOsmString;
         /// <summary>
         /// Stores a reference to the current configurator imports
         /// </summary>
