@@ -63,7 +63,7 @@ namespace Osm
                     }
                     else
                     {
-                        throw new XmlException("Element <values>  not found or does not contain attribute 'name'");
+                        throw new XmlException("Element <values> not found or does not contain attribute 'name'");
                     }
 
                     XElement xTableNameGeo = xTables.Element("geo");
@@ -73,12 +73,12 @@ namespace Osm
                     }
                     else
                     {
-                        throw new XmlException("Element <geo>  not found or does not contain attribute 'name'");
+                        throw new XmlException("Element <geo> not found or does not contain attribute 'name'");
                     }
                 }
                 else
                 {
-                    throw new XmlException("Element <tables>  not found or does not contain elements");
+                    throw new XmlException("Element <tables> not found or does not contain elements");
                 }
 
                 if (!String.IsNullOrEmpty(connectionString) || !String.IsNullOrEmpty(tableNameGeo) || !String.IsNullOrEmpty(tableNameValues))
@@ -207,6 +207,9 @@ namespace Osm
         GeometryCollection
     }
 
+    /// <summary>
+    /// The class that displays the configuration file in section 'database'
+    /// </summary>
     public class DatabaseConfig
     {
         public string ConnectionStringName { get; set; }
@@ -214,5 +217,88 @@ namespace Osm
         public string TableNameValues { get; set; }
     }
 
+    /// <summary>
+    /// Class that handles and stores the settings section 'geo' of transforming objects into geography
+    /// </summary>
+    public class GeoTypeConfig
+    {
+        public GeoTypeConfig(XElement xGeo)
+        {
+            if (XmlUtility.IsExistAttributesInXElement(xGeo))
+            {
+                this.InitializePrivateField();
+                foreach (XElement xGeoOsm in xGeo.Elements())
+                {
+                    switch (xGeoOsm.Name.ToString())
+                    {
+                        case "nodes":
+                            this.ProcessSectionGeoTypeOsm(xGeoOsm, _nodes);
+                            break;
+                        case "ways":
+                            this.ProcessSectionGeoTypeOsm(xGeoOsm, _ways);
+                            break;
+                        case "relations":
+                            this.ProcessSectionGeoTypeOsm(xGeoOsm, _relations);
+                            break;
+                    }
+                }
+            }
+            else
+            {
+                throw new XmlException(@"Element osm/geo not found or does not contain elements");
+            }
+        }
 
+        private void InitializePrivateField()
+        {
+            _nodes = new Dictionary<int, GeoTypeOGC>();
+            _ways = new Dictionary<int, GeoTypeOGC>();
+            _relations = new Dictionary<int, GeoTypeOGC>();
+        }
+
+        private void ProcessSectionGeoTypeOsm(XElement xGeoOsm, Dictionary<int,GeoTypeOGC> geoOsm)
+        {
+            if (XmlUtility.IsExistAttributesInXElement(xGeoOsm))
+            {
+                foreach (XElement xTags in xGeoOsm.Elements())
+                {
+                    if (xTags.Attribute("geography") != null)
+                    {
+                        GeoTypeOGC geoTypeOgc = this.GetTypeOGCFromSectionGeo(xTags.Attribute("geography").Value);
+                        geoOsm.Add(OsmImportUtilites.GetHash(xTags.Name.ToString()), geoTypeOgc);
+                    }
+                    else
+                    {
+                        throw new XmlException("A tag " + xGeoOsm.Name.ToString() +
+                            @"/" + xTags.Name.ToString() + " attribute 'geography' is not found");
+                    }
+                }
+            }
+        }
+
+        private GeoTypeOGC GetTypeOGCFromSectionGeo(string geography)
+        {
+            switch (geography)
+            {
+                case "POINT":
+                    return GeoTypeOGC.Point;
+                case "MULTIPOINT":
+                    return GeoTypeOGC.MultiPoint;
+                case "LINESTRING":
+                    return GeoTypeOGC.LineString;
+                case "MULTILINESTRING":
+                    return GeoTypeOGC.MultiLineString;
+                case "POLYGON":
+                    return GeoTypeOGC.Polygon;
+                case "MULTIPOLYGON":
+                    return GeoTypeOGC.MultiPolygon;
+                default:
+                    throw new XmlException("Geography type '" + geography + "' unknown");
+            }
+        }
+
+        private Dictionary<int, GeoTypeOGC> _nodes;
+        private Dictionary<int, GeoTypeOGC> _ways;
+        private Dictionary<int, GeoTypeOGC> _relations;
+    }
 }
