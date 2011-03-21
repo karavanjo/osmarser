@@ -105,7 +105,7 @@ namespace Osm
         /// <param name="tagsSection">XElement section "tags" configuration file</param>
         private void ProcessTagsSection(XElement tagsSection)
         {
-            _tags = new Dictionary<string, TypeValueTag>();
+            _tags = new Dictionary<int, TypeValueTag>();
             if (tagsSection != null && tagsSection.Elements().Count() > 0)
             {
                 // Loads a tags to be imported and their types
