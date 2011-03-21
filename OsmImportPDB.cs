@@ -212,36 +212,7 @@ namespace Osm
 
             }
         }
-
-        /// <summary>
-        /// Loads the dictionary _geodb data id and timestamp geography objects in the database
-        /// </summary>
-        public void DownloadDataFromDB()
-        {
-            string connectionString =
-                            ConfigurationManager.ConnectionStrings
-                            [_importConfigurator.DataBaseConfig.ConnectionStringName].ToString();
-
-            using (SqlConnection sqlConnection = new SqlConnection(connectionString))
-            {
-                SqlCommand sqlCommand = new SqlCommand
-                    ("SELECT idGeo AS id, timestampGeo AS times FROM " + _importConfigurator.DataBaseConfig.TableNameGeo,
-                    sqlConnection);
-                sqlConnection.Open();
-                SqlDataReader dataReader = sqlCommand.ExecuteReader();
-                while (dataReader.Read())
-                {
-                    this._geoDB.AddGeoFromDb(Convert.ToInt64(dataReader["id"]),
-                        Convert.ToInt64(dataReader["times"]));
-                }
-                dataReader.Close();
-            }
-        }
-
-        /// <summary>
-        /// Stores the image data from database
-        /// </summary>
-        private GeoDb _geoDB = new GeoDb();
+        
         /// <summary>
         /// Stores a reference to the current configurator imports
         /// </summary>
