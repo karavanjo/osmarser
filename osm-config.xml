@@ -1,0 +1,35 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<osm>
+	<database>
+		<connectionString name="osmarserDB" />
+		<tables>
+			<geo name="dbo.Geo"/>
+			<values name="dbo.TagsValues"/>
+		</tables>
+	</database>
+	<tags>
+		<import>
+			<string>
+				<name/>
+			</string>
+			<int>
+				<population/>
+			</int>
+			<!--<bit>
+				<capital/>
+			</bit>-->
+		</import>
+		<noimport>
+			<created_by/>
+		</noimport>
+	</tags>
+	<geo>
+		<ways>
+			<higway geography="LINE"/>
+			<building geography="POLYGON"/>
+		</ways>
+		<relations>
+			
+		</relations>
+	</geo>
+</osm>
