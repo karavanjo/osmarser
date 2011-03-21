@@ -40,7 +40,7 @@ namespace Osm
             _importConfigurator = new OsmImportConfigurator(pathFileConfig);
             ReadFilePdb();
         }
-        
+
 
         /// <summary>
         /// Deserializes to the level of primitive blocks (PrimitiveBlock)
@@ -56,7 +56,14 @@ namespace Osm
                     BlobHeader header;
                     using (var tmp = new LimitedStream(file, length))
                     {
-                        header = Serializer.Deserialize<BlobHeader>(tmp);
+                        try
+                        {
+                            header = Serializer.Deserialize<BlobHeader>(tmp);
+                        }
+                        catch (Exception e)
+                        {
+                            throw new FileLoadException("Invalid file format .pdb", e);
+                        }
                     }
                     Blob blob;
                     using (var tmp = new LimitedStream(file, header.datasize))
