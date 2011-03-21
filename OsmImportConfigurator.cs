@@ -27,6 +27,7 @@ namespace Osm
                 _osmConfig = XDocument.Load(pathOsmFileConfig);
                 ProcessDatabaseSection(_osmConfig.Root.Element("database"));
                 ProcessTagsSection(_osmConfig.Root.Element("tags"));
+                ProcessGeoSection(_osmConfig.Root.Element("geo"));
             }
             else
             {
@@ -120,6 +121,15 @@ namespace Osm
         }
 
         /// <summary>
+        /// Handles section "geo" section and fills _geoConfig
+        /// </summary>
+        /// <param name="geoSection"></param>
+        private void ProcessGeoSection (XElement geoSection)
+        {
+            _geoConfig = new GeoTypeConfig(geoSection);
+        }
+
+        /// <summary>
         /// Handles section "tags" section and fills _tags
         /// </summary>
         /// <param name="tagsSection">XElement section "tags" configuration file</param>
@@ -166,6 +176,10 @@ namespace Osm
         #endregion
 
         #region Private Fields
+        /// <summary>
+        /// Stores configuration data section osm/geo
+        /// </summary>
+        private GeoTypeConfig _geoConfig;
         /// <summary>
         /// Stores the tag values ​​from tag data types and possible / impossible to import
         /// </summary>
