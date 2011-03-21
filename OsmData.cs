@@ -110,10 +110,11 @@ namespace Osm
     /// </summary>
     public class Geo
     {
-        public Geo(Int64 id, Int64 timestamp)
+        public Geo(Int64 id, Int64 timestamp, Int32 user)
         {
             this.Id = id;
             this.Timestamp = timestamp;
+            this.User = user;
             this.HashTags = new List<int>();
         }
 
@@ -124,7 +125,7 @@ namespace Osm
 
         public Int64 Id { get; set; }
         public Int64 Timestamp { get; set; }
-
+        public Int32 User { get; set; }
         public List<Int32> HashTags;
     }
 
