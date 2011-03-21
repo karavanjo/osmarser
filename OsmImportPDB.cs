@@ -38,6 +38,7 @@ namespace Osm
         public void Import(string pathFileConfig)
         {
             _importConfigurator = new OsmImportConfigurator(pathFileConfig);
+            ReadFilePdb();
         }
         
 
