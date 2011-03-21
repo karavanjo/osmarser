@@ -132,7 +132,7 @@ namespace Osm
             {
                 foreach (XElement typeXElement in typeSection.Elements())
                 {
-                    _tags.Add(typeXElement.Name.ToString(), typeValueTag);
+                    _tags.Add(OsmImportUtilites.GetHash(typeXElement.Name.ToString()), typeValueTag);
                 }
             }
         }
@@ -140,7 +140,7 @@ namespace Osm
         /// <summary>
         /// Returns the type in which to store the tag value
         /// </summary>
-        /// <param name="tag">Tag Name</param>
+        /// <param name="tagHash">Tag Name Hash</param>
         /// <returns>Enumerator value ("Hash", "String", "Int" etc.)</returns>
         public TypeValueTag GetTypeValueTag(int tagHash)
         {
