@@ -158,7 +158,7 @@ namespace Osm
         /// <summary>
         /// Stores the tag values ​​from tag data types and possible / impossible to import
         /// </summary>
-        private Dictionary<int , TypeValueTag> _tags;
+        private Dictionary<int, TypeValueTag> _tags;
         /// <summary>
         /// Stores all the configuration file
         /// </summary>
@@ -191,6 +191,20 @@ namespace Osm
         /// The tag is not loaded into the database
         /// </summary>
         NoImport
+    }
+
+    /// <summary>
+    /// List the types geography Sql Server according to the OGC
+    /// </summary>
+    public enum GeoTypeOGC
+    {
+        Point,
+        MultiPoint,
+        LineString,
+        MultiLineString,
+        Polygon,
+        MultiPolygon,
+        GeometryCollection
     }
 
     public class DatabaseConfig
