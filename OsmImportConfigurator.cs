@@ -142,11 +142,11 @@ namespace Osm
         /// </summary>
         /// <param name="tag">Tag Name</param>
         /// <returns>Enumerator value ("Hash", "String", "Int" etc.)</returns>
-        public TypeValueTag GetTypeValueTag(string tag)
+        public TypeValueTag GetTypeValueTag(int tagHash)
         {
-            if (_tags.Keys.Contains(tag))
+            if (_tags.Keys.Contains(tagHash))
             {
-                return _tags[tag];
+                return _tags[tagHash];
             }
             else
             {
@@ -158,7 +158,7 @@ namespace Osm
         /// <summary>
         /// Stores the tag values ​​from tag data types and possible / impossible to import
         /// </summary>
-        private Dictionary<string, TypeValueTag> _tags;
+        private Dictionary<int , TypeValueTag> _tags;
         /// <summary>
         /// Stores all the configuration file
         /// </summary>
