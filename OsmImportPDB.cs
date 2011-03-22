@@ -209,7 +209,7 @@ namespace Osm
         /// Reads and parses a relations (OSMPBF.Relation)
         /// </summary>
         /// <param name="relations">An array of relations</param>
-        public void ReadRelations(List<OSMPBF.Relation> relations)
+        private void ReadRelations(List<OSMPBF.Relation> relations)
         {
             for (int r = 0; r < relations.Count; r++)
             {
@@ -217,12 +217,14 @@ namespace Osm
             }
         }
 
+        
+
         /// <summary>
         /// Determines whether to import into a database object based on configuration file import
         /// </summary>
         /// <param name="geo">Node, Way or Relation</param>
         /// <returns></returns>
-        public bool IsImportAsGeoInDb(OsmPrimitive osmPrimitive)
+        private bool IsImportAsGeoInDb(OsmPrimitive osmPrimitive)
         {
             bool imported = false;
             if (osmPrimitive.HashTags != null)
