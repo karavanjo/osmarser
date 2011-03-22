@@ -15,16 +15,11 @@ namespace Osm
     /// <summary>
     /// Stores all the nodes geography data
     /// </summary>
-    public class Nodes
+    public class GeoNodes
     {
-        public Nodes()
+        public GeoNodes()
         {
             _nodes = new Dictionary<Int64, Point>();
-        }
-
-        public void AddNode(Int64 id, Point pointCoordinate)
-        {
-            _nodes.Add(id, pointCoordinate);
         }
 
         public void AddNode(Int64 id, double lat, double lon)
@@ -43,9 +38,9 @@ namespace Osm
     /// <summary>
     /// Stores all the Ways geography data
     /// </summary>
-    public class Ways
+    public class GeoWays
     {
-        public Ways()
+        public GeoWays()
         {
             _ways = new Dictionary<long, List<Int64>>();
         }
