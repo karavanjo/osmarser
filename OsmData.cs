@@ -130,6 +130,38 @@ namespace Osm
         private List<int> _hashTags;
     }
 
+    /// <summary>
+    /// Class stores structural information way
+    /// </summary>
+    public class Way
+    {
+        public Way(Int64 id)
+        {
+            this._id = id;
+            this._hashTags = new List<int>();
+            this._nodesId = new List<Int64>();
+        }
+
+        public void AddHashTag(int hashTag)
+        {
+            this._hashTags.Add(hashTag);
+        }
+
+        public void AddIdNode (Int64 idNode)
+        {
+            _nodesId.Add(idNode);
+        }
+
+        public Int64 Id
+        {
+            get { return _id; }
+        }
+
+        private Int64 _id;
+        private List<Int64> _nodesId;
+        private List<int> _hashTags;
+    }
+
 
 
     public class Tags
