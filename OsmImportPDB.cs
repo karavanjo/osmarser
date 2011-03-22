@@ -150,12 +150,8 @@ namespace Osm
                 deltalat += denseNodes.lat[k];
                 deltalon += denseNodes.lon[k];
 
-                //Nodes.AddNode(deltaid, lat_offset + (deltalat * granularity),
-                //              lon_offset + (deltalon * granularity));
-
-                //Console.WriteLine(@"node id={0} lat={1} lon={2}", deltaid,
-                //        lat_offset + (deltalat * granularity),
-                //        lon_offset + (deltalon * granularity));
+                _nodes.AddNode(deltaid, latOffset + (deltalat * granularity),
+                              lonOffset + (deltalon * granularity));
 
                 if (denseNodes.denseinfo != null)
                 {
@@ -246,6 +242,7 @@ namespace Osm
             return imported;
         }
 
+        private Nodes _nodes = new Nodes();
         /// <summary>
         /// Stores hashes of tags / values​​ and their OSM names
         /// </summary>
