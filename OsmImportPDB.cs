@@ -217,7 +217,14 @@ namespace Osm
             }
         }
 
-        
+        private void HashAndCheckTagsValues(string tag, string value, out int hashTag, out int hashValue, out TypeValueTag typeValueTag)
+        {
+            hashTag = OsmImportUtilites.GetHash(tag);
+            hashValue = OsmImportUtilites.GetHash(value);
+            typeValueTag = _importConfigurator.GetTypeValueTag(hashTag);
+            if (!_hashTagsValuesOsmString.ContainsKey(hashTag)) _hashTagsValuesOsmString.Add(hashTag, value);
+
+        }
 
         /// <summary>
         /// Determines whether to import into a database object based on configuration file import
@@ -248,7 +255,7 @@ namespace Osm
         /// <summary>
         /// Stores hashes of tags / values​​ and their OSM names
         /// </summary>
-        private Dictionary<int, string> _tagsValuesOsmString;
+        private Dictionary<int, string> _hashTagsValuesOsmString;
         /// <summary>
         /// Stores a reference to the current configurator imports
         /// </summary>
