@@ -47,15 +47,15 @@ namespace Osm
     {
         public Ways()
         {
-            _ways = new Dictionary<long, List<int>>();
+            _ways = new Dictionary<long, List<Int64>>();
         }
 
-        public void AddWay (Int64 id, List<int> nodes)
+        public void AddWay (Int64 id, List<Int64> nodes)
         {
             _ways.Add(id, nodes);
         }
 
-        private Dictionary<Int64, List<int>> _ways;
+        private Dictionary<Int64, List<Int64>> _ways;
     }
 
     /// <summary>
