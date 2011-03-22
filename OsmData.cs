@@ -29,7 +29,7 @@ namespace Osm
 
         public void AddNode(Int64 id, double lat, double lon)
         {
-            _nodes.Add(id, new Point(){Lat = lat, Lon = lon});
+            _nodes.Add(id, new Point() { Lat = lat, Lon = lon });
         }
 
         public Int64 CountNodes()
@@ -50,7 +50,7 @@ namespace Osm
             _ways = new Dictionary<long, List<Int64>>();
         }
 
-        public void AddWay (Int64 id, List<Int64> nodes)
+        public void AddWay(Int64 id, List<Int64> nodes)
         {
             _ways.Add(id, nodes);
         }
@@ -68,7 +68,7 @@ namespace Osm
             _geosDb = new Dictionary<long, long>();
         }
 
-        public void AddGeoFromDb (Int64 idGeo, Int64 timestamp)
+        public void AddGeoFromDb(Int64 idGeo, Int64 timestamp)
         {
             _geosDb.Add(idGeo, timestamp);
         }
@@ -91,7 +91,7 @@ namespace Osm
                 {
                     return false;
                 }
-                
+
             }
             else
             {
@@ -106,27 +106,28 @@ namespace Osm
     }
 
     /// <summary>
-    /// The parent class for Nodes, Ways and Relations
+    /// Class stores structural information node
     /// </summary>
-    public class Geo
+    public class Node
     {
-        public Geo(Int64 id, Int64 timestamp, Int32 user)
+        public Node(Int64 id)
         {
-            this.Id = id;
-            this.Timestamp = timestamp;
-            this.User = user;
-            this.HashTags = new List<int>();
+            this._id = id;
+            this._hashTags = new List<int>();
         }
 
-        public void AddTagHash(Int32 hashTag)
+        public void AddHashTag (int hashTag)
         {
-            this.HashTags.Add(hashTag);
+            this._hashTags.Add(hashTag);
         }
 
-        public Int64 Id { get; set; }
-        public Int64 Timestamp { get; set; }
-        public Int32 User { get; set; }
-        public List<Int32> HashTags;
+        public Int64 Id
+        {
+            get { return _id; }
+        }
+
+        private Int64 _id;
+        private List<int> _hashTags;
     }
 
 
