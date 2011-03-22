@@ -250,7 +250,7 @@ namespace Osm
     {
         public GeoTypeConfig(XElement xGeo)
         {
-            if (XmlUtility.IsExistAttributesInXElement(xGeo))
+            if (XmlUtility.IsExistElementsInXElement(xGeo))
             {
                 this.InitializePrivateField();
                 foreach (XElement xGeoOsm in xGeo.Elements())
