@@ -100,10 +100,19 @@ namespace Osm
         private Dictionary<Int64, Int64> _geosDb;
     }
 
+    public abstract class OsmPrimitive
+    {
+        public List<int> HashTags
+        {
+            get { return _hashTags; }
+        }
+        private List<int> _hashTags;
+    }
+
     /// <summary>
     /// Class stores structural information node
     /// </summary>
-    public class Node
+    public class Node : OsmPrimitive
     {
         public Node(Int64 id)
         {
@@ -121,6 +130,11 @@ namespace Osm
             get { return _id; }
         }
 
+        public List<int> HashTags
+        {
+            get { return _hashTags; }
+        }
+
         private Int64 _id;
         private List<int> _hashTags;
     }
@@ -128,7 +142,7 @@ namespace Osm
     /// <summary>
     /// Class stores structural information way
     /// </summary>
-    public class Way
+    public class Way : OsmPrimitive
     {
         public Way(Int64 id)
         {
@@ -150,6 +164,11 @@ namespace Osm
         public Int64 Id
         {
             get { return _id; }
+        }
+
+        public List<int> HashTags
+        {
+            get { return _hashTags; }
         }
 
         private Int64 _id;

@@ -222,12 +222,12 @@ namespace Osm
         /// </summary>
         /// <param name="geo">Node, Way or Relation</param>
         /// <returns></returns>
-        public bool IsImportAsGeoInDb(Geo geo)
+        public bool IsImportAsGeoInDb(OsmPrimitive osmPrimitive)
         {
             bool imported = false;
-            if (geo.HashTags != null)
+            if (osmPrimitive.HashTags != null)
             {
-                foreach (int hashTag in geo.HashTags)
+                foreach (int hashTag in osmPrimitive.HashTags)
                 {
                     if (_importConfigurator.GetTypeValueTag(hashTag) != TypeValueTag.NoImport)
                     {
@@ -242,7 +242,7 @@ namespace Osm
             return imported;
         }
 
-        private Nodes _nodes = new Nodes();
+        private GeoNodes _nodes = new GeoNodes();
         /// <summary>
         /// Stores hashes of tags / values​​ and their OSM names
         /// </summary>
