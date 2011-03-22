@@ -226,7 +226,7 @@ namespace Osm
         /// </summary>
         /// <param name="geo">Node, Way or Relation</param>
         /// <returns></returns>
-        public bool IsImportInDb(Geo geo)
+        public bool IsImportAsGeoInDb(Geo geo)
         {
             bool imported = false;
             if (geo.HashTags != null)
