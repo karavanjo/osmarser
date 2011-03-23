@@ -217,13 +217,21 @@ namespace Osm
             }
         }
 
+        /// <summary>
+        /// Checks the type of tag values​​, calculates the hash value of tags and their values
+        /// </summary>
+        /// <param name="tag">OSM tag</param>
+        /// <param name="value">OSM tag value</param>
+        /// <param name="hashTag">Hash OSM tag</param>
+        /// <param name="hashValue">Hash OSM tag value</param>
+        /// <param name="typeValueTag">Type tag value</param>
         private void HashAndCheckTagsValues(string tag, string value, out int hashTag, out int hashValue, out TypeValueTag typeValueTag)
         {
             hashTag = OsmImportUtilites.GetHash(tag);
             hashValue = OsmImportUtilites.GetHash(value);
             typeValueTag = _importConfigurator.GetTypeValueTag(hashTag);
-            if (!_hashTagsValuesOsmString.ContainsKey(hashTag)) _hashTagsValuesOsmString.Add(hashTag, value);
-
+            if (!_hashTagsValuesOsmString.ContainsKey(hashTag)) _hashTagsValuesOsmString.Add(hashTag, tag);
+            if (typeValueTag!=TypeValueTag.NoImport && !_hashTagsValuesOsmString.ContainsKey(hashValue)) _hashTagsValuesOsmString.Add(hashValue, value);
         }
 
         /// <summary>
