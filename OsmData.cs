@@ -27,10 +27,19 @@ namespace Osm
     /// </summary>
     public class Node : OsmPrimitive
     {
-        public Node(Int64 id)
+        public Node(Int64 id, double lat, double lon)
         {
             base._id = id;
+            this._point = new Point(){Lat = lat, Lon = lon};
         }
+
+        public void GetLatLon (out double lat, out double lon)
+        {
+            lat = _point.Lat;
+            lon = _point.Lon;
+        }
+
+        private Point _point;
     }
 
     /// <summary>
@@ -49,6 +58,18 @@ namespace Osm
             _nodesId.Add(idNode);
         }
         
+        public bool IsPolygon()
+        {
+            if (_nodesId[0] == _nodesId[_nodesId.Count - 1])
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
         private List<Int64> _nodesId;
     }
 
