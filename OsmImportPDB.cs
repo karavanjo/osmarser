@@ -198,7 +198,7 @@ namespace Osm
                             primitiveBlock.stringtable.s[denseNodes.keys_vals[l]]);
                         val = UTF8Encoding.UTF8.GetString(
                                 primitiveBlock.stringtable.s[denseNodes.keys_vals[l + 1]]);
-                        this.HashAndCheckTagsValues(tag, val, out hashTag, out hashValue, out typeValueTag);
+                        this.GetHashAndCheckTagsValues(tag, val, out hashTag, out hashValue, out typeValueTag);
                         if (typeValueTag != TypeValueTag.NoImport)
                         {
                             tags.Add(has_tags);
@@ -271,7 +271,7 @@ namespace Osm
         /// <param name="hashTag">Hash OSM tag</param>
         /// <param name="hashValue">Hash OSM tag value</param>
         /// <param name="typeValueTag">Type tag value</param>
-        private void HashAndCheckTagsValues(string tag, string value, out int hashTag, out int hashValue, out TypeValueTag typeValueTag)
+        private void GetHashAndCheckTagsValues(string tag, string value, out int hashTag, out int hashValue, out TypeValueTag typeValueTag)
         {
             hashTag = OsmImportUtilites.GetHash(tag);
             hashValue = OsmImportUtilites.GetHash(value);
@@ -328,7 +328,7 @@ namespace Osm
         /// <summary>
         /// Stores hashes of tags / values​​ and their OSM names
         /// </summary>
-        private Dictionary<int, string> _hashTagsValuesOsmString;
+        private Dictionary<int, string> _hashTagsValuesOsmString = new Dictionary<int, string>();
         /// <summary>
         /// Stores a reference to the current configurator imports
         /// </summary>
