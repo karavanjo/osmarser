@@ -210,7 +210,7 @@ namespace Osm
 
                 if (this.IsImportAsGeoInDb(tags))
                 {
-                    
+
                 }
             }
         }
@@ -227,7 +227,43 @@ namespace Osm
             }
         }
 
+        /// <summary>
+        /// Insert row in DataTable _tagsValues
+        /// </summary>
+        /// <param name="idGeo">Id OsmPrimitive, which save as geography type in database</param>
+        /// <param name="hashTag">Hash tag</param>
+        /// <param name="hashValue">Yash value tag</param>
+        /// <param name="value">String value tag value</param>
+        /// <param name="typeValueTag">Type value tag</param>
+        private void InsertTagsAndValueInTableTagsValues(long idGeo, int hashTag, int hashValue, string value, TypeValueTag typeValueTag)
+        {
+            DataRow row = _tagsValues.NewRow();
+            row["idGeo"] = idGeo;
+            row["tag"] = hashTag;
 
+            switch (typeValueTag)
+            {
+                case TypeValueTag.Hash:
+                    row["vHash"] = hashValue;
+                    break;
+                case TypeValueTag.Int:
+                    int valueInt = 0;
+                    if (int.TryParse(value, out valueInt))
+                    {
+                        row["vInt"] = valueInt;
+                    }
+                    else
+                    {
+                        throw new NotImplementedException("Parsed value type Int FAILED!");
+                    }
+                    break;
+                case TypeValueTag.String:
+                    row["vString"] = value;
+                    break;
+            }
+
+            _tagsValues.Rows.Add(row);
+        }
 
         /// <summary>
         /// Checks the type of tag values​​, calculates the hash value of tags and their values
