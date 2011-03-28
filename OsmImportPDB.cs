@@ -106,7 +106,7 @@ namespace Osm
             {
                 if (primitiveGroup.dense != null)
                 {
-                    ReadDenseNodes(primitiveGroup.dense, latOffset, lonOffset, granularity);
+                    ReadDenseNodes(primitiveBlock, primitiveGroup.dense, latOffset, lonOffset, granularity);
                 }
                 if (primitiveGroup.ways != null)
                 {
@@ -132,8 +132,9 @@ namespace Osm
         /// <param name="latOffset">Offset latitude = .000000001 * primitiveBlock.lat_offset</param>
         /// <param name="lonOffset">Longitude offset = .000000001 * primitiveBlock.lon_offset</param>
         /// <param name="granularity">Granularity = .000000001 * primitiveBlock.granularity</param>
-        private void ReadDenseNodes(DenseNodes denseNodes, double latOffset, double lonOffset, double granularity)
+        private void ReadDenseNodes(PrimitiveBlock primitiveBlock, DenseNodes denseNodes, double latOffset, double lonOffset, double granularity)
         {
+
             int l = 0;
             long deltaid = 0;
             long deltalat = 0;
@@ -143,6 +144,15 @@ namespace Osm
             long deltauid = 0;
             long deltauser_sid = 0;
 
+            string tag;
+            string val;
+            int hashTag;
+            int hashValue;
+            TypeValueTag typeValueTag;
+
+            // Add variable which store hash-value tags
+            List<int> tags = new List<int>();
+
             for (int k = 0; k < denseNodes.id.Count; k++)
             {
                 int has_tags = 0;
@@ -150,8 +160,11 @@ namespace Osm
                 deltalat += denseNodes.lat[k];
                 deltalon += denseNodes.lon[k];
 
-                _nodes.AddNode(deltaid, latOffset + (deltalat * granularity),
+                Osm.Node node = new Node(deltaid, latOffset + (deltalat * granularity),
                               lonOffset + (deltalon * granularity));
+
+                // Clear tags
+                tags.Clear();
 
                 if (denseNodes.denseinfo != null)
                 {
@@ -180,28 +193,21 @@ namespace Osm
                         {
                             has_tags++;
                         }
-
-
-
-                        //key =
-                        //    UTF8Encoding.UTF8.GetString(
-                        //        primitiveBlock.stringtable.s[dense.keys_vals[l]]);
-                        //val =
-                        //    UTF8Encoding.UTF8.GetString(
-                        //        primitiveBlock.stringtable.s[dense.keys_vals[l + 1]]);
-
-                        //importConfigurator.GetTypeValueTag(key);
-
-                        //Console.Write("key = {0} || ", key);
-                        //Console.WriteLine("val = {0}", val);
-
-                        //Console.Write("key = {0} || ", key.GetHashCode());
-                        //Console.WriteLine("val = {0}", UTF8Encoding.UTF8.(
-                        //        primitiveBlock.stringtable.s[dense.keys_vals[l + 1]]));
+                        tag = UTF8Encoding.UTF8.GetString(
+                            primitiveBlock.stringtable.s[denseNodes.keys_vals[l]]);
+                        val = UTF8Encoding.UTF8.GetString(
+                                primitiveBlock.stringtable.s[denseNodes.keys_vals[l + 1]]);
+                        this.HashAndCheckTagsValues(tag, val, out hashTag, out hashValue, out typeValueTag);
+                        if (typeValueTag != TypeValueTag.NoImport)
+                        {
+                            tags.Add(has_tags);
+                        }
                         l += 2;
                     }
                     l += 1;
                 }
+
+
             }
         }
 
@@ -217,6 +223,8 @@ namespace Osm
             }
         }
 
+
+
         /// <summary>
         /// Checks the type of tag values​​, calculates the hash value of tags and their values
         /// </summary>
@@ -231,7 +239,7 @@ namespace Osm
             hashValue = OsmImportUtilites.GetHash(value);
             typeValueTag = _importConfigurator.GetTypeValueTag(hashTag);
             if (!_hashTagsValuesOsmString.ContainsKey(hashTag)) _hashTagsValuesOsmString.Add(hashTag, tag);
-            if (typeValueTag!=TypeValueTag.NoImport && !_hashTagsValuesOsmString.ContainsKey(hashValue)) _hashTagsValuesOsmString.Add(hashValue, value);
+            if (typeValueTag != TypeValueTag.NoImport && !_hashTagsValuesOsmString.ContainsKey(hashValue)) _hashTagsValuesOsmString.Add(hashValue, value);
         }
 
         /// <summary>
@@ -259,7 +267,8 @@ namespace Osm
             return imported;
         }
 
-        private GeoNodes _nodes = new GeoNodes();
+
+        private Dictionary<Node, bool> _nodesOsm = new Dictionary<Node, bool>();
         /// <summary>
         /// Stores hashes of tags / values​​ and their OSM names
         /// </summary>
