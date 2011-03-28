@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
@@ -262,6 +263,28 @@ namespace Osm
             }
         }
 
+        /// <summary>
+        /// Creates a table for storing tags and their values
+        /// </summary>
+        /// <returns>Table for storing tags and their values</returns>
+        private DataTable GetTableTagsValue()
+        {
+            DataColumn idGeo = new DataColumn("idGeo", Type.GetType("System.Int32"));
+            DataColumn tag = new DataColumn("tag", Type.GetType("System.Int32"));
+            DataColumn vHash = new DataColumn("vHash", Type.GetType("System.Int32"));
+            DataColumn vString = new DataColumn("vString", Type.GetType("System.String"));
+            DataColumn vInt = new DataColumn("vInt", Type.GetType("System.Int32"));
+
+            DataTable tagsValues = new DataTable();
+
+            tagsValues.Columns.Add(idGeo);
+            tagsValues.Columns.Add(tag);
+            tagsValues.Columns.Add(vHash);
+            tagsValues.Columns.Add(vString);
+            tagsValues.Columns.Add(vInt);
+
+            return tagsValues;
+        }
 
         private Dictionary<Node, bool> _nodesOsm = new Dictionary<Node, bool>();
         /// <summary>
