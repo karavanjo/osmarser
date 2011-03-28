@@ -267,7 +267,7 @@ namespace Osm
         /// Creates a table for storing tags and their values
         /// </summary>
         /// <returns>Table for storing tags and their values</returns>
-        private DataTable GetTableTagsValue()
+        private static DataTable GetTableTagsValue()
         {
             DataColumn idGeo = new DataColumn("idGeo", Type.GetType("System.Int32"));
             DataColumn tag = new DataColumn("tag", Type.GetType("System.Int32"));
@@ -287,6 +287,10 @@ namespace Osm
         }
 
         private Dictionary<Node, bool> _nodesOsm = new Dictionary<Node, bool>();
+        /// <summary>
+        /// DataTable which store tags and value for froup OsmPrimitive
+        /// </summary>
+        private DataTable _tagsValues = OsmImportPDB.GetTableTagsValue();
         /// <summary>
         /// Stores hashes of tags / values​​ and their OSM names
         /// </summary>
