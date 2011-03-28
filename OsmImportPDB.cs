@@ -207,7 +207,10 @@ namespace Osm
                     l += 1;
                 }
 
-
+                if (this.IsImportAsGeoInDb(tags))
+                {
+                    
+                }
             }
         }
 
@@ -245,26 +248,18 @@ namespace Osm
         /// <summary>
         /// Determines whether to import into a database object based on configuration file import
         /// </summary>
-        /// <param name="geo">Node, Way or Relation</param>
-        /// <returns></returns>
-        private bool IsImportAsGeoInDb(OsmPrimitive osmPrimitive)
+        /// <param name="hashTagsConcreteGeo">List hash-tag concrete OsmPrimitive</param>
+        /// <returns>Returns TRUE if the object on the grounds of tags imported as a geography</returns>
+        private bool IsImportAsGeoInDb(List<int> hashTagsConcreteGeo)
         {
-            bool imported = false;
-            if (osmPrimitive.HashTags != null)
+            if (hashTagsConcreteGeo.Count < 0)
             {
-                foreach (int hashTag in osmPrimitive.HashTags)
-                {
-                    if (_importConfigurator.GetTypeValueTag(hashTag) != TypeValueTag.NoImport)
-                    {
-                        return true;
-                    }
-                }
+                return true;
             }
             else
             {
                 return false;
             }
-            return imported;
         }
 
 
