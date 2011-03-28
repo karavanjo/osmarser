@@ -202,16 +202,15 @@ namespace Osm
                         if (typeValueTag != TypeValueTag.NoImport)
                         {
                             tags.Add(has_tags);
+                            this.InsertTagsAndValueInTableTagsValues(node.Id, hashTag, hashValue, val, typeValueTag);
                         }
                         l += 2;
                     }
                     l += 1;
                 }
 
-                if (this.IsImportAsGeoInDb(tags))
-                {
-
-                }
+                // Check whether there is a tags of an object 
+                _nodesOsm.Add(node, IsImportAsGeoInDb(tags));
             }
         }
 
@@ -261,7 +260,6 @@ namespace Osm
                     row["vString"] = value;
                     break;
             }
-
             _tagsValues.Rows.Add(row);
         }
 
