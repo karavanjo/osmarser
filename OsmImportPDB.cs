@@ -275,7 +275,14 @@ namespace Osm
         {
             hashTag = OsmImportUtilites.GetHash(tag);
             hashValue = OsmImportUtilites.GetHash(value);
-            typeValueTag = _importConfigurator.GetTypeValueTag(hashTag);
+            if (tag.Contains("name"))
+            {
+                typeValueTag = TypeValueTag.String;
+            }
+            else
+            {
+                typeValueTag = _importConfigurator.GetTypeValueTag(hashTag);
+            }
             if (!_hashTagsValuesOsmString.ContainsKey(hashTag)) _hashTagsValuesOsmString.Add(hashTag, tag);
             if (typeValueTag != TypeValueTag.NoImport && !_hashTagsValuesOsmString.ContainsKey(hashValue)) _hashTagsValuesOsmString.Add(hashValue, value);
         }
