@@ -201,6 +201,9 @@ namespace Osm
                         this.GetHashAndCheckTagsValues(tag, val, out hashTag, out hashValue, out typeValueTag);
                         if (typeValueTag != TypeValueTag.NoImport)
                         {
+                            if (!_hashTagsValuesOsmString.ContainsKey(hashTag)) _hashTagsValuesOsmString.Add(hashTag, tag);
+                            if (typeValueTag == TypeValueTag.Hash && !_hashTagsValuesOsmString.ContainsKey(hashValue))
+                                _hashTagsValuesOsmString.Add(hashValue, val);
                             tags.Add(has_tags);
                             this.InsertTagsAndValueInTableTagsValues(node.Id, hashTag, hashValue, val, typeValueTag);
                         }
@@ -275,16 +278,24 @@ namespace Osm
         {
             hashTag = OsmImportUtilites.GetHash(tag);
             hashValue = OsmImportUtilites.GetHash(value);
-            if (tag.Contains("name"))
-            {
-                typeValueTag = TypeValueTag.String;
-            }
-            else
-            {
-                typeValueTag = _importConfigurator.GetTypeValueTag(hashTag);
-            }
-            if (!_hashTagsValuesOsmString.ContainsKey(hashTag)) _hashTagsValuesOsmString.Add(hashTag, tag);
-            if (typeValueTag != TypeValueTag.NoImport && !_hashTagsValuesOsmString.ContainsKey(hashValue)) _hashTagsValuesOsmString.Add(hashValue, value);
+            typeValueTag = this.IsValueString(tag) ? 
+                TypeValueTag.String : 
+                _importConfigurator.GetTypeValueTag(hashTag);
+        }
+
+        /// <summary>
+        /// Checks if the tag values ​​for which he is obliged to import as a string
+        /// </summary>
+        /// <param name="tag">String representation of the tag</param>
+        /// <returns>True - string, False - Hash value</returns>
+        private bool IsValueString(string tag)
+        {
+            if (tag.Contains("name")) return true;
+            if (tag.Contains("wikipedia")) return true;
+            if (tag.Contains("source")) return true;
+            if (tag.Contains("is_in")) return true;
+            if (tag.Contains("NAME")) return true;
+            return false;
         }
 
         /// <summary>
