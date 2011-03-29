@@ -36,24 +36,28 @@ namespace Osm
         }
         #endregion
 
-        #region Public methods
         /// <summary>
         /// Returns the type in which to store the tag value
         /// </summary>
-        /// <param name="tagHash">Tag Name Hash</param>
+        /// <param name="tag">Tag Name</param>
         /// <returns>Enumerator value ("Hash", "String", "Int" etc.)</returns>
-        public TypeValueTag GetTypeValueTag(int tagHash)
+        public TypeValueTag GetTypeValueTag(string tag)
         {
-            if (_tags.Keys.Contains(tagHash))
+            foreach (KeyValuePair<string, TypeValueTag> keyValuePair in _tagsContains)
             {
-                return _tags[tagHash];
+                if (tag.Contains(keyValuePair.Key)) return keyValuePair.Value;
+            }
+            TypeValueTag typeValueTag;
+            if (_tags.TryGetValue(OsmImportUtilites.GetHash(tag), out typeValueTag))
+            {
+                return typeValueTag;
             }
             else
             {
                 return TypeValueTag.Hash;
             }
+
         }
-        #endregion
 
         #region Private methods
         /// <summary>
@@ -124,7 +128,7 @@ namespace Osm
         /// Handles section "geo" section and fills _geoConfig
         /// </summary>
         /// <param name="geoSection"></param>
-        private void ProcessGeoSection (XElement geoSection)
+        private void ProcessGeoSection(XElement geoSection)
         {
             _geoConfig = new GeoTypeConfig(geoSection);
         }
@@ -135,7 +139,6 @@ namespace Osm
         /// <param name="tagsSection">XElement section "tags" configuration file</param>
         private void ProcessTagsSection(XElement tagsSection)
         {
-            _tags = new Dictionary<int, TypeValueTag>();
             if (tagsSection != null && tagsSection.Elements().Count() > 0)
             {
                 // Loads a tags to be imported and their types
@@ -162,7 +165,14 @@ namespace Osm
             {
                 foreach (XElement typeXElement in typeSection.Elements())
                 {
-                    _tags.Add(OsmImportUtilites.GetHash(typeXElement.Name.ToString()), typeValueTag);
+                    if (typeXElement.Attribute("contain") != null)
+                    {
+                        _tagsContains.Add(typeXElement.Attribute("contain").Value, typeValueTag);
+                    }
+                    if (typeXElement.Attribute("tag") != null)
+                    {
+                        _tags.Add(OsmImportUtilites.GetHash(typeXElement.Attribute("tag").Value), typeValueTag);
+                    }
                 }
             }
         }
@@ -183,7 +193,11 @@ namespace Osm
         /// <summary>
         /// Stores the tag values ​​from tag data types and possible / impossible to import
         /// </summary>
-        private Dictionary<int, TypeValueTag> _tags;
+        private Dictionary<int, TypeValueTag> _tags = new Dictionary<int, TypeValueTag>();
+        /// <summary>
+        /// Stores the tag values CONTAINES ​​from tag data types and possible / impossible to import
+        /// </summary>
+        private Dictionary<string, TypeValueTag> _tagsContains = new Dictionary<string, TypeValueTag>();
         /// <summary>
         /// Stores all the configuration file
         /// </summary>

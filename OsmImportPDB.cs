@@ -277,10 +277,9 @@ namespace Osm
         private void GetHashAndCheckTagsValues(string tag, string value, out int hashTag, out int hashValue, out TypeValueTag typeValueTag)
         {
             hashTag = OsmImportUtilites.GetHash(tag);
-            hashValue = OsmImportUtilites.GetHash(value);
-            typeValueTag = this.IsValueString(tag) ? 
-                TypeValueTag.String : 
-                _importConfigurator.GetTypeValueTag(hashTag);
+            hashValue = 0;
+            typeValueTag = _importConfigurator.GetTypeValueTag(tag);
+            if (typeValueTag == TypeValueTag.Hash) hashValue = OsmImportUtilites.GetHash(value);
         }
 
         /// <summary>
