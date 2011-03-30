@@ -111,7 +111,7 @@ namespace Osm
                 }
                 if (primitiveGroup.ways != null)
                 {
-                    //ReadWays(primitiveGroup.ways);
+                    ReadWays(primitiveBlock, primitiveGroup.ways);
                 }
                 if (primitiveGroup.relations != null)
                 {
@@ -216,6 +216,63 @@ namespace Osm
                 _nodesOsm.Add(node, IsImportAsGeoInDb(tags));
             }
         }
+
+        /// <summary>
+        /// Reads and parses a ways (OSMPBF.Way)
+        /// </summary>
+        /// <param name="ways">List of ways</param>
+        private void ReadWays(PrimitiveBlock primitiveBlock, List<OSMPBF.Way> ways)
+        {
+            string tag;
+            string val;
+            int hashTag;
+            int hashValue;
+            long deltaref = 0;
+            TypeValueTag typeValueTag;
+            // Is it possible to import on the basis of the presence of significant tags
+            bool IsImportToDb;
+            // Add variable which store hash-value tags
+            List<int> tags = new List<int>();
+
+            for (int wayIndex = 0; wayIndex < ways.Count; wayIndex++)
+            {
+                OSMPBF.Way osmpbfWay = ways[wayIndex];
+                Osm.Way way = new Way(osmpbfWay.id);
+                for (int nodeRef = 0; nodeRef < osmpbfWay.refs.Count; nodeRef++)
+                {
+                    deltaref += osmpbfWay.refs[nodeRef];
+                    way.AddIdNode(deltaref);
+                }
+
+                IsImportToDb = false;
+
+                if (osmpbfWay.keys.Count != 0 || osmpbfWay.keys.Count != 0)
+                {
+                    // Clear tags
+                    tags.Clear();
+                    for (int keyId = 0; keyId < osmpbfWay.keys.Count; keyId++)
+                    {
+                        tag = UTF8Encoding.UTF8.GetString(
+                            primitiveBlock.stringtable.s[Convert.ToInt32(osmpbfWay.keys[keyId])]);
+                        val = UTF8Encoding.UTF8.GetString(
+                                primitiveBlock.stringtable.s[Convert.ToInt32(osmpbfWay.vals[keyId])]);
+                        this.GetHashAndCheckTagsValues(tag, val, out hashTag, out hashValue, out typeValueTag);
+                        if (typeValueTag != TypeValueTag.NoImport)
+                        {
+                            IsImportToDb = true;
+                            if (!_hashTagsValuesOsmString.ContainsKey(hashTag)) _hashTagsValuesOsmString.Add(hashTag, tag);
+                            if (typeValueTag == TypeValueTag.Hash && !_hashTagsValuesOsmString.ContainsKey(hashValue))
+                                _hashTagsValuesOsmString.Add(hashValue, val);
+                            this.InsertTagsAndValueInTableTagsValues(way.Id, hashTag, hashValue, val, typeValueTag);
+                        }
+                    }
+                }
+
+                _waysOsm.Add(way, IsImportToDb);
+            }
+        }
+
+
 
         /// <summary>
         /// Reads and parses a relations (OSMPBF.Relation)
@@ -337,7 +394,14 @@ namespace Osm
             return tagsValues;
         }
 
+        /// <summary>
+        /// Stores nodes labeled as the storage of geography objects to the database
+        /// </summary>
         private Dictionary<Node, bool> _nodesOsm = new Dictionary<Node, bool>();
+        /// <summary>
+        /// Stores ways labeled as the storage of geography objects to the database
+        /// </summary>
+        private Dictionary<Way, bool> _waysOsm = new Dictionary<Way, bool>();
         /// <summary>
         /// DataTable which store tags and value for froup OsmPrimitive
         /// </summary>
