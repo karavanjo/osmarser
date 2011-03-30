@@ -197,14 +197,6 @@ namespace Osm
     }
 
 
-
-
-
-
-
-
-
-
     public class Tag
     {
         public int IdTag { get; set; }

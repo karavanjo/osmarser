@@ -22,6 +22,8 @@
 				<t contain="terrace:"/>
 				<t contain="name_"/>
 				<t contain="_ref"/>
+				<t contain="traffic_sign:"/>
+				<t contain="contact:"/>
 				<t tag="name"/>
 				<t tag="is_in"/>
 				<t tag="addr:street"/>
@@ -41,6 +43,10 @@
 				<t tag="closest_town"/>
 				<t tag="image"/>
 				<t tag="branch"/>
+				<t tag="brand"/>
+				<t tag="pk"/>
+				<t tag="addr"/>
+				<t tag="country"/>
 			</string>
 			<int>
 				<t tag="population"/>
@@ -48,14 +54,18 @@
 				<t tag="admin_level"/>
 				<t tag="postal_code"/>
 				<t tag="layer"/>
+				<t tag="stars"/>
 			</int>
 		</import>
 		<noimport>
 			<t contain="source:"/>
 			<t contain="cladr:"/>
 			<t contain="description:"/>
-			<t contain="fixme"/>
+			<t contain="fixme"/>			
 			<t contain="note:"/>
+			<t contain="millennium:"/>
+			<t contain="gns:"/>
+			<t tag="FIXME"/>
 			<t tag="description"/>
 			<t tag="created_by"/>
 			<t tag="note"/>
