@@ -151,8 +151,8 @@ namespace Osm
             int hashValue;
             TypeValueTag typeValueTag;
 
-            // Add variable which store hash-value tags
-            List<int> tags = new List<int>();
+            // Is it possible to import on the basis of the presence of significant tags
+            bool IsImportToDb;
 
             for (int k = 0; k < denseNodes.id.Count; k++)
             {
@@ -163,9 +163,6 @@ namespace Osm
 
                 Osm.Node node = new Node(deltaid, latOffset + (deltalat * granularity),
                               lonOffset + (deltalon * granularity));
-
-                // Clear tags
-                tags.Clear();
 
                 if (denseNodes.denseinfo != null)
                 {
@@ -186,6 +183,8 @@ namespace Osm
                     //Console.WriteLine("timestamp {0}", deltatimestamp);
                 }
 
+                IsImportToDb = false;
+
                 if (l < denseNodes.keys_vals.Count)
                 {
                     while (denseNodes.keys_vals[l] != 0 && l < denseNodes.keys_vals.Count)
@@ -204,7 +203,7 @@ namespace Osm
                             if (!_hashTagsValuesOsmString.ContainsKey(hashTag)) _hashTagsValuesOsmString.Add(hashTag, tag);
                             if (typeValueTag == TypeValueTag.Hash && !_hashTagsValuesOsmString.ContainsKey(hashValue))
                                 _hashTagsValuesOsmString.Add(hashValue, val);
-                            tags.Add(has_tags);
+                            IsImportToDb = true;
                             this.InsertTagsAndValueInTableTagsValues(node.Id, hashTag, hashValue, val, typeValueTag);
                         }
                         l += 2;
@@ -213,7 +212,7 @@ namespace Osm
                 }
 
                 // Check whether there is a tags of an object 
-                _nodesOsm.Add(node, IsImportAsGeoInDb(tags));
+                _nodesOsm.Add(node, IsImportToDb);
             }
         }
 
@@ -231,8 +230,6 @@ namespace Osm
             TypeValueTag typeValueTag;
             // Is it possible to import on the basis of the presence of significant tags
             bool IsImportToDb;
-            // Add variable which store hash-value tags
-            List<int> tags = new List<int>();
 
             for (int wayIndex = 0; wayIndex < ways.Count; wayIndex++)
             {
@@ -248,8 +245,6 @@ namespace Osm
 
                 if (osmpbfWay.keys.Count != 0 || osmpbfWay.keys.Count != 0)
                 {
-                    // Clear tags
-                    tags.Clear();
                     for (int keyId = 0; keyId < osmpbfWay.keys.Count; keyId++)
                     {
                         tag = UTF8Encoding.UTF8.GetString(
@@ -267,7 +262,6 @@ namespace Osm
                         }
                     }
                 }
-
                 _waysOsm.Add(way, IsImportToDb);
             }
         }
