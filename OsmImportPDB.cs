@@ -221,10 +221,6 @@ namespace Osm
         /// <param name="ways">List of ways</param>
         private void ReadWays(PrimitiveBlock primitiveBlock, List<OSMPBF.Way> ways)
         {
-            //long deltatimestamp = 0;
-            //long deltachangeset = 0;
-            //long deltauid = 0;
-            //long deltauser_sid = 0;
             int dateGranularity = primitiveBlock.date_granularity;
 
             long second = 0;
@@ -248,17 +244,9 @@ namespace Osm
                 if (osmpbfWay.info != null)
                 {
                     OSMPBF.Info info = osmpbfWay.info;
-
-                    //deltatimestamp += info.timestamp;
-                    //deltachangeset += info.changeset;
-                    //deltauid += info.uid;
-                    //deltauser_sid += info.user_sid;
-
                     second = (info.timestamp * dateGranularity) / 1000;
                     stamp = this.timeEpoche.AddSeconds(second);
-
                 }
-
 
                 Osm.Way way = new Way(osmpbfWay.id, stamp);
                 for (int nodeRef = 0; nodeRef < osmpbfWay.refs.Count; nodeRef++)
@@ -357,38 +345,6 @@ namespace Osm
             hashValue = 0;
             typeValueTag = _importConfigurator.GetTypeValueTag(tag);
             if (typeValueTag == TypeValueTag.Hash) hashValue = OsmImportUtilites.GetHash(value);
-        }
-
-        /// <summary>
-        /// Checks if the tag values ​​for which he is obliged to import as a string
-        /// </summary>
-        /// <param name="tag">String representation of the tag</param>
-        /// <returns>True - string, False - Hash value</returns>
-        private bool IsValueString(string tag)
-        {
-            if (tag.Contains("name")) return true;
-            if (tag.Contains("wikipedia")) return true;
-            if (tag.Contains("source")) return true;
-            if (tag.Contains("is_in")) return true;
-            if (tag.Contains("NAME")) return true;
-            return false;
-        }
-
-        /// <summary>
-        /// Determines whether to import into a database object based on configuration file import
-        /// </summary>
-        /// <param name="hashTagsConcreteGeo">List hash-tag concrete OsmPrimitive</param>
-        /// <returns>Returns TRUE if the object on the grounds of tags imported as a geography</returns>
-        private bool IsImportAsGeoInDb(List<int> hashTagsConcreteGeo)
-        {
-            if (hashTagsConcreteGeo.Count < 0)
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
         }
 
         /// <summary>
