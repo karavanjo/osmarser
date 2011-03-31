@@ -126,6 +126,8 @@ namespace Osm
             }
         }
 
+        private DateTime timeEpoche = new DateTime(1970, 1, 1);
+
         /// <summary>
         /// Reads and parses a dense nodes (DenseNodes)
         /// </summary>
@@ -136,6 +138,7 @@ namespace Osm
         private void ReadDenseNodes(PrimitiveBlock primitiveBlock, DenseNodes denseNodes, double latOffset, double lonOffset, double granularity)
         {
 
+
             int l = 0;
             long deltaid = 0;
             long deltalat = 0;
@@ -144,6 +147,7 @@ namespace Osm
             long deltachangeset = 0;
             long deltauid = 0;
             long deltauser_sid = 0;
+            int dateGranularity = primitiveBlock.date_granularity;
 
             string tag;
             string val;
@@ -160,28 +164,23 @@ namespace Osm
                 deltaid += denseNodes.id[k];
                 deltalat += denseNodes.lat[k];
                 deltalon += denseNodes.lon[k];
-
-                Osm.Node node = new Node(deltaid, latOffset + (deltalat * granularity),
-                              lonOffset + (deltalon * granularity));
+                DateTime stamp = new DateTime();
 
                 if (denseNodes.denseinfo != null)
                 {
                     DenseInfo denseinfo = denseNodes.denseinfo;
 
                     deltatimestamp += denseinfo.timestamp[k];
-                    deltachangeset += denseinfo.changeset[k];
-                    deltauid += denseinfo.uid[k];
-                    deltauser_sid += denseinfo.user_sid[k];
+                    //deltachangeset += denseinfo.changeset[k];
+                    //deltauid += denseinfo.uid[k];
+                    //deltauser_sid += denseinfo.user_sid[k];
 
-                    //Console.WriteLine("version {0}", denseinfo.version[k]);
-                    //Console.WriteLine("changeset {0}", deltachangeset);
-                    //if (deltauid != -1)
-                    //{ // osmosis makes anonymous users -1, ignoring
-                    //    Console.WriteLine(primitiveBlock.stringtable.s[Convert.ToInt32(deltauser_sid)]);
-                    //    Console.WriteLine("uid {0}", deltauid);
-                    //}
-                    //Console.WriteLine("timestamp {0}", deltatimestamp);
+                    stamp = this.timeEpoche.AddSeconds(deltatimestamp * dateGranularity / 1000);
+                    
                 }
+
+                Osm.Node node = new Node(deltaid, latOffset + (deltalat * granularity),
+                                             lonOffset + (deltalon * granularity), stamp);
 
                 IsImportToDb = false;
 
@@ -222,19 +221,46 @@ namespace Osm
         /// <param name="ways">List of ways</param>
         private void ReadWays(PrimitiveBlock primitiveBlock, List<OSMPBF.Way> ways)
         {
+            //long deltatimestamp = 0;
+            //long deltachangeset = 0;
+            //long deltauid = 0;
+            //long deltauser_sid = 0;
+            int dateGranularity = primitiveBlock.date_granularity;
+
+            long second = 0;
+
             string tag;
             string val;
             int hashTag;
             int hashValue;
             long deltaref = 0;
             TypeValueTag typeValueTag;
+
             // Is it possible to import on the basis of the presence of significant tags
             bool IsImportToDb;
 
             for (int wayIndex = 0; wayIndex < ways.Count; wayIndex++)
             {
                 OSMPBF.Way osmpbfWay = ways[wayIndex];
-                Osm.Way way = new Way(osmpbfWay.id);
+
+                DateTime stamp = new DateTime();
+
+                if (osmpbfWay.info != null)
+                {
+                    OSMPBF.Info info = osmpbfWay.info;
+
+                    //deltatimestamp += info.timestamp;
+                    //deltachangeset += info.changeset;
+                    //deltauid += info.uid;
+                    //deltauser_sid += info.user_sid;
+
+                    second = (info.timestamp * dateGranularity) / 1000;
+                    stamp = this.timeEpoche.AddSeconds(second);
+
+                }
+
+
+                Osm.Way way = new Way(osmpbfWay.id, stamp);
                 for (int nodeRef = 0; nodeRef < osmpbfWay.refs.Count; nodeRef++)
                 {
                     deltaref += osmpbfWay.refs[nodeRef];

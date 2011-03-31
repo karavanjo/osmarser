@@ -18,8 +18,14 @@ namespace Osm
         {
             get { return _id; }
         }
+
+        public DateTime DateStamp
+        {
+            get { return _dateStamp; }
+        }
         
         protected Int64 _id;
+        protected DateTime _dateStamp;
     }
 
     /// <summary>
@@ -27,10 +33,11 @@ namespace Osm
     /// </summary>
     public class Node : OsmPrimitive
     {
-        public Node(Int64 id, double lat, double lon)
+        public Node(Int64 id, double lat, double lon, DateTime dateTime)
         {
             base._id = id;
             this._point = new Point(){Lat = lat, Lon = lon};
+            base._dateStamp = dateTime;
         }
 
         public void GetLatLon (out double lat, out double lon)
@@ -47,10 +54,11 @@ namespace Osm
     /// </summary>
     public class Way : OsmPrimitive
     {
-        public Way(Int64 id)
+        public Way(Int64 id, DateTime dateTime)
         {
             base._id = id;
             this._nodesId = new List<Int64>();
+            base._dateStamp = dateTime;
         }
 
         public void AddIdNode (Int64 idNode)
