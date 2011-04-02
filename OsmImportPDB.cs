@@ -6,6 +6,7 @@ using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
 using System.IO;
+using System.Threading;
 using OSMPBF;
 using ProtoBuf;
 
@@ -40,6 +41,7 @@ namespace Osm
         {
             _importConfigurator = new OsmImportConfigurator(pathFileConfig);
             ReadFilePdb();
+            this.StartUploadTagsValueInDB(_tagsValues);
         }
 
 
@@ -137,8 +139,6 @@ namespace Osm
         /// <param name="granularity">Granularity = .000000001 * primitiveBlock.granularity</param>
         private void ReadDenseNodes(PrimitiveBlock primitiveBlock, DenseNodes denseNodes, double latOffset, double lonOffset, double granularity)
         {
-
-
             int l = 0;
             long deltaid = 0;
             long deltalat = 0;
@@ -291,6 +291,31 @@ namespace Osm
             for (int r = 0; r < relations.Count; r++)
             {
 
+            }
+        }
+
+        private void StartUploadTagsValueInDB(DataTable tagsValue)
+        {
+            Thread threadUploadTagsValueInDB = new Thread(
+                new ParameterizedThreadStart(this.UploadTagsValueInDB));
+            threadUploadTagsValueInDB.Start(tagsValue);
+        }
+
+        private void UploadTagsValueInDB (object tagsValue_DataTable)
+        {
+            DataTable tagsValue = (DataTable)tagsValue_DataTable;
+            string connectionString = ConfigurationManager.ConnectionStrings[_importConfigurator.DataBaseConfig.ConnectionStringName].ToString();
+            
+            using (SqlBulkCopy sqlBulkCopy = new SqlBulkCopy(connectionString))
+            {
+                foreach (DataColumn dataColumn in tagsValue.Columns)
+                {
+                    sqlBulkCopy.ColumnMappings.Add(dataColumn.ColumnName, dataColumn.ColumnName);
+                }
+
+                sqlBulkCopy.DestinationTableName = _importConfigurator.DataBaseConfig.TableNameValues;
+
+                sqlBulkCopy.WriteToServer(tagsValue);
             }
         }
 

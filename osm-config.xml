@@ -90,8 +90,8 @@
 		<nodes>
 		</nodes>
 		<ways>
-			<higway geography="LINE"/>
-			<building geography="POLYGON"/>
+			<t tag="higway" geography="LINE"/>
+			<t tag="building" geography="POLYGON"/>
 		</ways>
 		<relations>
 		</relations>

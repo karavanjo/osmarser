@@ -13,7 +13,7 @@ CREATE TABLE dbo.TagsValues
 idGeo bigint,
 tag int,
 vHash int,
-vString varchar(max),
+vString nvarchar(max),
 vInt int
 )
 CREATE TABLE dbo.TagsValuesTrans

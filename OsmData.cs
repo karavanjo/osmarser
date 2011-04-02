@@ -81,6 +81,14 @@ namespace Osm
         private List<Int64> _nodesId;
     }
 
+    
+
+
+
+
+
+
+
     public class Tags
     {
         public Tags()
