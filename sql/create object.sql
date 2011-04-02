@@ -12,6 +12,7 @@ CREATE TABLE dbo.TagsValues
 (
 idGeo bigint,
 tag int,
+vType smallint,
 vHash int,
 vString nvarchar(max),
 vInt int
@@ -20,9 +21,9 @@ CREATE TABLE dbo.TagsValuesTrans
 (
 entity int,
 osm varchar(max),
-ru varchar(max),
-be varchar(max),
-en varchar(max),
+ru nvarchar(max),
+be nvarchar(max),
+en nvarchar(max),
 main bit
 )
 

@@ -176,7 +176,7 @@ namespace Osm
                     //deltauser_sid += denseinfo.user_sid[k];
 
                     stamp = this.timeEpoche.AddSeconds(deltatimestamp * dateGranularity / 1000);
-                    
+
                 }
 
                 Osm.Node node = new Node(deltaid, latOffset + (deltalat * granularity),
@@ -294,31 +294,6 @@ namespace Osm
             }
         }
 
-        private void StartUploadTagsValueInDB(DataTable tagsValue)
-        {
-            Thread threadUploadTagsValueInDB = new Thread(
-                new ParameterizedThreadStart(this.UploadTagsValueInDB));
-            threadUploadTagsValueInDB.Start(tagsValue);
-        }
-
-        private void UploadTagsValueInDB (object tagsValue_DataTable)
-        {
-            DataTable tagsValue = (DataTable)tagsValue_DataTable;
-            string connectionString = ConfigurationManager.ConnectionStrings[_importConfigurator.DataBaseConfig.ConnectionStringName].ToString();
-            
-            using (SqlBulkCopy sqlBulkCopy = new SqlBulkCopy(connectionString))
-            {
-                foreach (DataColumn dataColumn in tagsValue.Columns)
-                {
-                    sqlBulkCopy.ColumnMappings.Add(dataColumn.ColumnName, dataColumn.ColumnName);
-                }
-
-                sqlBulkCopy.DestinationTableName = _importConfigurator.DataBaseConfig.TableNameValues;
-
-                sqlBulkCopy.WriteToServer(tagsValue);
-            }
-        }
-
         /// <summary>
         /// Insert row in DataTable _tagsValues
         /// </summary>
@@ -337,12 +312,14 @@ namespace Osm
             {
                 case TypeValueTag.Hash:
                     row["vHash"] = hashValue;
+                    row["vType"] = Convert.ToInt16(TypeValueTag.Hash);
                     break;
                 case TypeValueTag.Int:
                     int valueInt = 0;
                     if (int.TryParse(value, out valueInt))
                     {
                         row["vInt"] = valueInt;
+                        row["vType"] = Convert.ToInt16(TypeValueTag.Int);
                     }
                     else
                     {
@@ -351,10 +328,46 @@ namespace Osm
                     break;
                 case TypeValueTag.String:
                     row["vString"] = value;
+                    row["vType"] = Convert.ToInt16(TypeValueTag.String);
                     break;
             }
             _tagsValues.Rows.Add(row);
         }
+
+        /// <summary>
+        /// Starts a thread which loads the data on tags and their values ​​to the database
+        /// </summary>
+        /// <param name="tagsValue">Table tags and values</param>
+        private void StartUploadTagsValueInDB(DataTable tagsValue)
+        {
+            Thread threadUploadTagsValueInDB = new Thread(
+                new ParameterizedThreadStart(this.UploadTagsValueInDB));
+            threadUploadTagsValueInDB.Start(tagsValue);
+        }
+
+        /// <summary>
+        /// Loads the data on tags and their values ​​to the database
+        /// </summary>
+        /// <param name="tagsValue_DataTable">Table tags and values</param>
+        private void UploadTagsValueInDB(object tagsValue_DataTable)
+        {
+            DataTable tagsValue = (DataTable)tagsValue_DataTable;
+            string connectionString = ConfigurationManager.ConnectionStrings[_importConfigurator.DataBaseConfig.ConnectionStringName].ToString();
+
+            using (SqlBulkCopy sqlBulkCopy = new SqlBulkCopy(connectionString))
+            {
+                foreach (DataColumn dataColumn in tagsValue.Columns)
+                {
+                    sqlBulkCopy.ColumnMappings.Add(dataColumn.ColumnName, dataColumn.ColumnName);
+                }
+
+                sqlBulkCopy.DestinationTableName = _importConfigurator.DataBaseConfig.TableNameValues;
+
+                sqlBulkCopy.WriteToServer(tagsValue);
+            }
+        }
+
+
 
         /// <summary>
         /// Checks the type of tag values​​, calculates the hash value of tags and their values
@@ -380,6 +393,7 @@ namespace Osm
         {
             DataColumn idGeo = new DataColumn("idGeo", Type.GetType("System.Int32"));
             DataColumn tag = new DataColumn("tag", Type.GetType("System.Int32"));
+            DataColumn vType = new DataColumn("vType", Type.GetType("System.Int16"));
             DataColumn vHash = new DataColumn("vHash", Type.GetType("System.Int32"));
             DataColumn vString = new DataColumn("vString", Type.GetType("System.String"));
             DataColumn vInt = new DataColumn("vInt", Type.GetType("System.Int32"));
@@ -388,6 +402,7 @@ namespace Osm
 
             tagsValues.Columns.Add(idGeo);
             tagsValues.Columns.Add(tag);
+            tagsValues.Columns.Add(vType);
             tagsValues.Columns.Add(vHash);
             tagsValues.Columns.Add(vString);
             tagsValues.Columns.Add(vInt);
