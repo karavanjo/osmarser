@@ -8,7 +8,7 @@ namespace Osm.Changes
     /// <summary>
     /// Class that stores the OSM pimitive (nodes, ways and relations) with changes
     /// </summary>
-    public class OsmImportChanges
+    public class OsmChanges
     {
         /// <summary>
         /// Added Osm primitive
