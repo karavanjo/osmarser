@@ -7,6 +7,8 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 
+using Osm.Utilites;
+
 namespace Osm
 {
     public class OsmImportUtilites
@@ -17,26 +19,47 @@ namespace Osm
         }
     }
 
-    public class UploadTableInDb
+    public class ImporterInSqlServer
     {
-        public static void UploadTableInSqlServerNewThread(DataTable dataTable, string connectionString, string destinationNameTable)
+        private Scheduler _scheduler = new Scheduler();
+
+        public void UploadTableInSqlServerNewThread(DataTable dataTable, string connectionString, string destinationNameTable, int timeout)
         {
-            UploadTableInDb.UploadTableInSqlServerNewThread(new ImportTable(dataTable, connectionString, destinationNameTable));
+            this.Import(new ImportTable(dataTable, connectionString, destinationNameTable, timeout));
         }
 
-        public static void UploadTableInSqlServerNewThread(DataTable dataTable, string connectionString, string destinationNameTable, int timeout)
+        public void UploadTableInSqlServerNewThread(DataTable dataTable, string connectionString, string destinationNameTable)
         {
-            UploadTableInDb.UploadTableInSqlServerNewThread(new ImportTable(dataTable, connectionString, destinationNameTable, timeout));
+            this.Import(new ImportTable(dataTable, connectionString, destinationNameTable));
         }
 
-        private static void UploadTableInSqlServerNewThread(ImportTable importTable)
+        public void UploadTableInSqlServerNewThread(DataTable dataTable, string connectionString)
         {
-            Thread threadUploadTableInSqlServer = new Thread(
-                new ParameterizedThreadStart(UploadTableInDb.UploadTableInSqlServer));
-            threadUploadTableInSqlServer.Start(importTable);
+            new Thread(this.Import).Start(new ImportTable(dataTable, connectionString));
         }
 
-        private static void UploadTableInSqlServer(object importTable)
+        private void Import(object importTable)
+        {
+            ImportTable _importTable = (ImportTable) importTable;
+            try
+            {
+                _scheduler.Enter(_importTable);
+                try
+                {
+                    ImporterInSqlServer.UploadTableInSqlServer(_importTable);
+                }
+                finally
+                {
+                    _scheduler.Done();
+                }
+            }
+            catch (Exception)
+            {
+                throw new AbandonedMutexException();
+            }
+        }
+
+        private static void UploadTableInSqlServer(ImportTable importTable)
         {
             ImportTable _importTable = (ImportTable)importTable;
 
@@ -54,7 +77,7 @@ namespace Osm
         }
     }
 
-    public class ImportTable
+    public class ImportTable : ISchedulerOrdering
     {
         public ImportTable(DataTable dataTable, string connectionString, string destinationNameTable, int timeout)
         {
@@ -98,18 +121,32 @@ namespace Osm
         {
             get { return _timeout; }
         }
+
+        private DateTime _time;
+        public DateTime Time { get { return _time; } }
+
+        public bool ScheduleBefore(ISchedulerOrdering s)
+        {
+            if (s is ImportTable)
+            {
+                ImportTable importTable = (ImportTable)s;
+                return (this.Time < importTable.Time);
+            }
+            return false;
+        }
     }
 
+    
     public class ConstructDataTable
     {
-        public ConstructDataTable(string nameColumn, string typeColumn)
+        public ConstructDataTable(string nameTable)
         {
-            _columnsNameAndTypes.Add(nameColumn, Type.GetType(typeColumn));
+            this._nameDataTable = nameTable;
         }
 
-        public ConstructDataTable(string nameColumn, TypeDataTable typeDataTable)
+        public ConstructDataTable()
         {
-            _columnsNameAndTypes.Add(nameColumn, this.GetTypeDataTable(typeDataTable));
+            this._nameDataTable = "";
         }
 
         public void AddColumn(string nameColumn, string typeColumn)
@@ -122,19 +159,15 @@ namespace Osm
             _columnsNameAndTypes.Add(nameColumn, this.GetTypeDataTable(typeDataTable));
         }
 
-        public DataTable GetDataTable(string nameDataTable)
+        public DataTable GetDataTable()
         {
-            DataTable dataTableConstructed = new DataTable(nameDataTable);
+            DataTable dataTableConstructed = new DataTable(this._nameDataTable);
             foreach (KeyValuePair<string, Type> columnNameAndType in _columnsNameAndTypes)
             {
                 DataColumn columnNew = new DataColumn(columnNameAndType.Key, columnNameAndType.Value);
+                dataTableConstructed.Columns.Add(columnNew);
             }
             return dataTableConstructed;
-        }
-
-        public DataTable GetDataTable()
-        {
-            return this.GetDataTable("");
         }
 
         private Type GetTypeDataTable(TypeDataTable typeDataTable)
@@ -164,6 +197,13 @@ namespace Osm
             throw new TypeLoadException("Type " + typeDataTable + " not supported");
         }
 
+        public string NameDataTable
+        {
+            get { return _nameDataTable; }
+            set { _nameDataTable = value; }
+        }
+
+        private string _nameDataTable;
         Dictionary<string, Type> _columnsNameAndTypes = new Dictionary<string, Type>();
     }
 
