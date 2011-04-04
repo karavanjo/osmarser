@@ -41,10 +41,14 @@ namespace Osm
         /// <param name="pathFileConfig">The path to the file XML import configuration</param>
         public void Import(string pathFileConfig)
         {
+            _importer = new ImporterInSqlServer();
             _importConfigurator = new OsmImportConfigurator(pathFileConfig);
+            _connectionString = ConfigurationManager.ConnectionStrings[_importConfigurator.DataBaseConfig.ConnectionStringName].ToString();
+            _tagsValues = this.GetTableTagsValue();
             ReadFilePdb();
+            _importer.UploadTableInSqlServerNewThread(_tagsValues, _connectionString);
             this.GeoProcessingNode();
-            //this.StartUploadTagsValueInDB(_tagsValues);
+            
         }
 
 
@@ -339,39 +343,6 @@ namespace Osm
         }
 
         /// <summary>
-        /// Starts a thread which loads the data on tags and their values ​​to the database
-        /// </summary>
-        /// <param name="tagsValue">Table tags and values</param>
-        private void StartUploadTagsValueInDB(DataTable tagsValue)
-        {
-            Thread threadUploadTagsValueInDB = new Thread(
-                new ParameterizedThreadStart(this.UploadTagsValueInDB));
-            threadUploadTagsValueInDB.Start(tagsValue);
-        }
-
-        /// <summary>
-        /// Loads the data on tags and their values ​​to the database
-        /// </summary>
-        /// <param name="tagsValue_DataTable">Table tags and values</param>
-        private void UploadTagsValueInDB(object tagsValue_DataTable)
-        {
-            DataTable tagsValue = (DataTable)tagsValue_DataTable;
-            string connectionString = ConfigurationManager.ConnectionStrings[_importConfigurator.DataBaseConfig.ConnectionStringName].ToString();
-
-            using (SqlBulkCopy sqlBulkCopy = new SqlBulkCopy(connectionString))
-            {
-                foreach (DataColumn dataColumn in tagsValue.Columns)
-                {
-                    sqlBulkCopy.ColumnMappings.Add(dataColumn.ColumnName, dataColumn.ColumnName);
-                }
-                sqlBulkCopy.BulkCopyTimeout = 100;
-                sqlBulkCopy.DestinationTableName = _importConfigurator.DataBaseConfig.TableNameValues;
-
-                sqlBulkCopy.WriteToServer(tagsValue);
-            }
-        }
-
-        /// <summary>
         /// Checks the type of tag values​​, calculates the hash value of tags and their values
         /// </summary>
         /// <param name="tag">OSM tag</param>
@@ -391,32 +362,23 @@ namespace Osm
         /// Creates a table for storing tags and their values
         /// </summary>
         /// <returns>Table for storing tags and their values</returns>
-        private static DataTable GetTableTagsValue()
+        private DataTable GetTableTagsValue()
         {
-            DataColumn idGeo = new DataColumn("idGeo", Type.GetType("System.Int32"));
-            DataColumn tag = new DataColumn("tag", Type.GetType("System.Int32"));
-            DataColumn vType = new DataColumn("vType", Type.GetType("System.Int16"));
-            DataColumn vHash = new DataColumn("vHash", Type.GetType("System.Int32"));
-            DataColumn vString = new DataColumn("vString", Type.GetType("System.String"));
-            DataColumn vInt = new DataColumn("vInt", Type.GetType("System.Int32"));
-
-            DataTable tagsValues = new DataTable();
-
-            tagsValues.Columns.Add(idGeo);
-            tagsValues.Columns.Add(tag);
-            tagsValues.Columns.Add(vType);
-            tagsValues.Columns.Add(vHash);
-            tagsValues.Columns.Add(vString);
-            tagsValues.Columns.Add(vInt);
-
-            return tagsValues;
+            ConstructDataTable constructDataTable = new ConstructDataTable(_importConfigurator.DataBaseConfig.TableNameValues);
+            constructDataTable.AddColumn("idGeo", TypeDataTable.Int64);
+            constructDataTable.AddColumn("tag", TypeDataTable.Int32);
+            constructDataTable.AddColumn("vType", TypeDataTable.Int16);
+            constructDataTable.AddColumn("vHash", TypeDataTable.Int32);
+            constructDataTable.AddColumn("vString", TypeDataTable.String);
+            constructDataTable.AddColumn("vInt", TypeDataTable.Int32);
+            return constructDataTable.GetDataTable();
         }
 
         private void GeoProcessingNode()
         {
             if (_nodesOsm.Count > 0)
             {
-                DataTable _nodesGeo = this.CreateTableGeoNodes();
+                DataTable _nodesGeo = this.GetTableGeoNodes();
 
                 foreach (KeyValuePair<Node, bool> keyValuePair in _nodesOsm)
                 {
@@ -431,29 +393,25 @@ namespace Osm
                         geographyBuilder.EndGeography();
                         geo = geographyBuilder.ConstructedGeography;
                         
-                        //SqlBytes sqlBytes = geo.STAsBinary();
-
                         DataRow dataRow = _nodesGeo.NewRow();
                         dataRow["idGeo"] = keyValuePair.Key.Id;
-                        dataRow["bin"] = geo.STAsBinary();
+                        dataRow["bin"] = geo.STAsBinary().Buffer;
                         _nodesGeo.Rows.Add(dataRow);
                     }
                 }
+
+                _importer.UploadTableInSqlServerNewThread(_nodesGeo, _connectionString);
             }
         }
 
-        private DataTable CreateTableGeoNodes()
+        private DataTable GetTableGeoNodes()
         {
-            DataTable geoNodes = new DataTable();
-
-            DataColumn idGeo = new DataColumn("idGeo", Type.GetType("System.Int64"));
-            DataColumn bin = new DataColumn("bin", Type.GetType("System.Byte[]"));
-
-            geoNodes.Columns.Add(idGeo);
-            geoNodes.Columns.Add(bin);
-
-            return geoNodes;
+            ConstructDataTable constructDataTable = new ConstructDataTable(_importConfigurator.DataBaseConfig.TableNameGeo);
+            constructDataTable.AddColumn("idGeo", TypeDataTable.Int64);
+            constructDataTable.AddColumn("bin", TypeDataTable.ByteArray);
+            return constructDataTable.GetDataTable();
         }
+
 
         /// <summary>
         /// Stores nodes labeled as the storage of geography objects to the database
@@ -466,15 +424,19 @@ namespace Osm
         /// <summary>
         /// DataTable which store tags and value for froup OsmPrimitive
         /// </summary>
-        private DataTable _tagsValues = OsmImportPDB.GetTableTagsValue();
+        private DataTable _tagsValues;
         /// <summary>
         /// Stores hashes of tags / values​​ and their OSM names
         /// </summary>
         private Dictionary<int, string> _hashTagsValuesOsmString = new Dictionary<int, string>();
+
+        private string _connectionString;
         /// <summary>
         /// Stores a reference to the current configurator imports
         /// </summary>
         private OsmImportConfigurator _importConfigurator;
+
+        private ImporterInSqlServer _importer;
         /// <summary>
         /// Absolute path to the file. pdb
         /// </summary>
