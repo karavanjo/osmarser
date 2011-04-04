@@ -46,6 +46,16 @@ namespace Osm
             lon = _point.Lon;
         }
 
+        public double Latitude
+        {
+            get { return _point.Lat; }
+        }
+
+        public double Longtitude
+        {
+            get { return _point.Lon; }
+        }
+
         private Point _point;
     }
 
