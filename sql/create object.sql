@@ -4,7 +4,8 @@
 CREATE TABLE dbo.Geo
 (
 idGeo bigint,
-geo geography
+geo geography,
+bin varbinary(max)
 )
 
 -- Create tables to store data Tags and Tag values
