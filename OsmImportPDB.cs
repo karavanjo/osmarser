@@ -9,6 +9,8 @@ using System.IO;
 using System.Threading;
 using OSMPBF;
 using ProtoBuf;
+using Microsoft.SqlServer.Types;
+using System.Data.SqlTypes;
 
 namespace Osm
 {
@@ -41,7 +43,8 @@ namespace Osm
         {
             _importConfigurator = new OsmImportConfigurator(pathFileConfig);
             ReadFilePdb();
-            this.StartUploadTagsValueInDB(_tagsValues);
+            this.GeoProcessingNode();
+            //this.StartUploadTagsValueInDB(_tagsValues);
         }
 
 
@@ -213,6 +216,7 @@ namespace Osm
                 // Check whether there is a tags of an object 
                 _nodesOsm.Add(node, IsImportToDb);
             }
+
         }
 
         /// <summary>
@@ -360,14 +364,12 @@ namespace Osm
                 {
                     sqlBulkCopy.ColumnMappings.Add(dataColumn.ColumnName, dataColumn.ColumnName);
                 }
-
+                sqlBulkCopy.BulkCopyTimeout = 100;
                 sqlBulkCopy.DestinationTableName = _importConfigurator.DataBaseConfig.TableNameValues;
 
                 sqlBulkCopy.WriteToServer(tagsValue);
             }
         }
-
-
 
         /// <summary>
         /// Checks the type of tag values​​, calculates the hash value of tags and their values
@@ -408,6 +410,49 @@ namespace Osm
             tagsValues.Columns.Add(vInt);
 
             return tagsValues;
+        }
+
+        private void GeoProcessingNode()
+        {
+            if (_nodesOsm.Count > 0)
+            {
+                DataTable _nodesGeo = this.CreateTableGeoNodes();
+
+                foreach (KeyValuePair<Node, bool> keyValuePair in _nodesOsm)
+                {
+                    if (keyValuePair.Value == true)
+                    {
+                        SqlGeography geo = new SqlGeography();
+                        SqlGeographyBuilder geographyBuilder = new SqlGeographyBuilder();
+                        geographyBuilder.SetSrid(4326);
+                        geographyBuilder.BeginGeography(OpenGisGeographyType.Point);
+                        geographyBuilder.BeginFigure(keyValuePair.Key.Latitude, keyValuePair.Key.Longtitude);
+                        geographyBuilder.EndFigure();
+                        geographyBuilder.EndGeography();
+                        geo = geographyBuilder.ConstructedGeography;
+                        
+                        //SqlBytes sqlBytes = geo.STAsBinary();
+
+                        DataRow dataRow = _nodesGeo.NewRow();
+                        dataRow["idGeo"] = keyValuePair.Key.Id;
+                        dataRow["bin"] = geo.STAsBinary();
+                        _nodesGeo.Rows.Add(dataRow);
+                    }
+                }
+            }
+        }
+
+        private DataTable CreateTableGeoNodes()
+        {
+            DataTable geoNodes = new DataTable();
+
+            DataColumn idGeo = new DataColumn("idGeo", Type.GetType("System.Int64"));
+            DataColumn bin = new DataColumn("bin", Type.GetType("System.Byte[]"));
+
+            geoNodes.Columns.Add(idGeo);
+            geoNodes.Columns.Add(bin);
+
+            return geoNodes;
         }
 
         /// <summary>
