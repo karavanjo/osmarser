@@ -88,16 +88,13 @@ namespace Osm
             }
         }
 
+        public List<long> RefNodes
+        {
+            get { return _nodesId; }
+        }
+
         private List<Int64> _nodesId;
     }
-
-    
-
-
-
-
-
-
 
     public class Tags
     {
