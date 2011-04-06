@@ -59,6 +59,28 @@ namespace Osm
 
         }
 
+        /// <summary>
+        /// Determines whether specific rules for the preservation of the OsmPrimitiveType as an Geography for certain tags
+        /// </summary>
+        /// <param name="osmPrimitiveType">Type OsmPrimitive (Way or Relation)</param>
+        /// <param name="hashTag">Tag hash</param>
+        /// <param name="geoType">Out geoType if rule tag if there or NULL is not</param>
+        /// <returns>True if exist rul tag</returns>
+        public bool GetTypeOGC(OsmPrimitiveType osmPrimitiveType, int hashTag, out GeoType geoType)
+        {
+            switch (osmPrimitiveType)
+            {
+                case OsmPrimitiveType.Way:
+                    geoType = this._geoConfig.GetGeoTypeTagWay(hashTag);
+                    return true;
+                case OsmPrimitiveType.Relation:
+                    geoType = this._geoConfig.GetGeoTypeTagRealtion(hashTag);
+                    return true;
+            }
+            geoType = null;
+            return false;
+        }
+
         #region Private methods
         /// <summary>
         /// Handles section "database" section and fills _tags
@@ -334,6 +356,32 @@ namespace Osm
                     return GeoTypeOGC.MultiPolygon;
                 default:
                     throw new XmlException("Geography type '" + geography + "' unknown");
+            }
+        }
+
+        public GeoType GetGeoTypeTagWay(int hashTag)
+        {
+            GeoTypeOGC geoTypeOgc;
+            if (_ways.TryGetValue(hashTag, out geoTypeOgc))
+            {
+                return new GeoType(geoTypeOgc);
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        public GeoType GetGeoTypeTagRealtion(int hashTag)
+        {
+            GeoTypeOGC geoTypeOgc;
+            if (_relations.TryGetValue(hashTag, out geoTypeOgc))
+            {
+                return new GeoType(geoTypeOgc);
+            }
+            else
+            {
+                return null;
             }
         }
 
