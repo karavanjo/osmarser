@@ -22,23 +22,44 @@ namespace Osm
     public class ImporterInSqlServer
     {
         private Scheduler _scheduler = new Scheduler();
+        private bool _shedule = false;
 
-        public void UploadTableInSqlServerNewThread(DataTable dataTable, string connectionString, string destinationNameTable, int timeout)
+        public bool Shedule
         {
-            this.Import(new ImportTable(dataTable, connectionString, destinationNameTable, timeout));
+            get { return _shedule; }
+            set { _shedule = value; }
         }
 
-        public void UploadTableInSqlServerNewThread(DataTable dataTable, string connectionString, string destinationNameTable)
+        public void UploadTableInSqlServerNewThread(DataTable dataTable, string connectionString,
+            string destinationNameTable = "",
+            int timeout = 100,
+            bool shedule = false)
         {
-            this.Import(new ImportTable(dataTable, connectionString, destinationNameTable));
+            if (destinationNameTable == "") destinationNameTable = dataTable.TableName;
+            ImportTable importTable = new ImportTable(dataTable, connectionString, destinationNameTable, timeout);
+            if (shedule)
+            {
+                // ----- DEBUG
+                Console.WriteLine("Upload task in Shedule - table " 
+                    + importTable.DestinationNameTable 
+                    + " (" + importTable.DataTable.Rows.Count + ")");
+                // ------
+
+                new Thread(this.ImportBySheduller).Start(importTable);
+            }
+            else
+            {
+                // ----- DEBUG
+                Console.WriteLine("Task without Shedule - table "
+                    + importTable.DestinationNameTable
+                    + " (" + importTable.DataTable.Rows.Count + ")");
+                // ------
+
+                new Thread(this.ImportWithoutSheduller).Start(importTable);
+            }
         }
 
-        public void UploadTableInSqlServerNewThread(DataTable dataTable, string connectionString)
-        {
-            new Thread(this.Import).Start(new ImportTable(dataTable, connectionString));
-        }
-
-        private void Import(object importTable)
+        private void ImportBySheduller(object importTable)
         {
             ImportTable _importTable = (ImportTable) importTable;
             try
@@ -53,15 +74,32 @@ namespace Osm
                     _scheduler.Done();
                 }
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                throw new AbandonedMutexException();
+                // ----- DEBUG
+                Console.WriteLine("Exception " + 
+                    e.Message);
+                // ------
+                int i;
+                //throw new AbandonedMutexException();
             }
+        }
+
+        private void ImportWithoutSheduller(object importTable)
+        {
+            ImportTable _importTable = (ImportTable)importTable;
+            ImporterInSqlServer.UploadTableInSqlServer(_importTable);
         }
 
         private static void UploadTableInSqlServer(ImportTable importTable)
         {
             ImportTable _importTable = (ImportTable)importTable;
+            
+            // ----- DEBUG
+            Console.WriteLine("Start upload - table "
+                + _importTable.DestinationNameTable
+                + " (" + _importTable.DataTable.Rows.Count + ")");
+            // ------
 
             using (SqlBulkCopy sqlBulkCopy = new SqlBulkCopy(_importTable.ConnectionString))
             {
@@ -74,6 +112,12 @@ namespace Osm
 
                 sqlBulkCopy.WriteToServer(_importTable.DataTable);
             }
+
+            // ----- DEBUG
+            Console.WriteLine("End upload - table "
+                + _importTable.DestinationNameTable
+                + " (" + _importTable.DataTable.Rows.Count + ")");
+            // ------
         }
     }
 
@@ -86,16 +130,6 @@ namespace Osm
             this._destinationNameTable = destinationNameTable;
             this._timeout = timeout;
         }
-
-        public ImportTable(DataTable dataTable, string connectionString, string destinationNameTable)
-            : this(dataTable, connectionString, destinationNameTable, 100) { }
-
-        public ImportTable(DataTable dataTable, string connectionString, int timeout)
-            : this(dataTable, connectionString, dataTable.TableName, timeout) { }
-
-        public ImportTable(DataTable dataTable, string connectionString)
-            : this(dataTable, connectionString, dataTable.TableName, 100) { }
-
 
         private DataTable _dataTable;
         private string _connectionString;
@@ -139,14 +173,9 @@ namespace Osm
     
     public class ConstructDataTable
     {
-        public ConstructDataTable(string nameTable)
+        public ConstructDataTable(string nameTable = "")
         {
             this._nameDataTable = nameTable;
-        }
-
-        public ConstructDataTable()
-        {
-            this._nameDataTable = "";
         }
 
         public void AddColumn(string nameColumn, string typeColumn)
