@@ -378,12 +378,18 @@ namespace Osm
             return constructDataTable.GetDataTable();
         }
 
+        /// <summary>
+        /// Imports OsmPrimitive (nodes, ways and relations) in Sql Server
+        /// </summary>
         private void ImportOsmPrimitiveToDb()
         {
             this.ImportPrimitiveNodesToDb();
             this.ImportPrimitiveWaysToDb();
         }
 
+        /// <summary>
+        /// Imports Nodes in Sql Server
+        /// </summary>
         private void ImportPrimitiveNodesToDb()
         {
             DataTable tableNodes = this.GetTableNodes();
@@ -407,6 +413,10 @@ namespace Osm
             if (tableNodes.Rows.Count > 0) _importer.UploadTableInSqlServerNewThread(tableNodes, _connectionString, shedule: true);
         }
 
+        /// <summary>
+        /// Returns the template table for imports nodes in Sql Server
+        /// </summary>
+        /// <returns>Template table for saving node</returns>
         private DataTable GetTableNodes()
         {
             ConstructDataTable nodes = new ConstructDataTable("dbo.Nodes");
@@ -416,6 +426,9 @@ namespace Osm
             return nodes.GetDataTable();
         }
 
+        /// <summary>
+        /// Imports Ways in Sql Server
+        /// </summary>
         private void ImportPrimitiveWaysToDb()
         {
             DataTable tableWays = this.GetTableWays();
@@ -440,6 +453,10 @@ namespace Osm
             if (tableWays.Rows.Count > 0) _importer.UploadTableInSqlServerNewThread(tableWays, _connectionString, shedule: true);
         }
 
+        /// <summary>
+        /// Returns the template table for imports ways in Sql Server
+        /// </summary>
+        /// <returns>Template table for saving way</returns>
         private DataTable GetTableWays()
         {
             ConstructDataTable ways = new ConstructDataTable("dbo.Ways");
@@ -448,12 +465,14 @@ namespace Osm
             return ways.GetDataTable();
         }
 
+        /// <summary>
+        /// Imports node (geography POINT) in Sql Server as a varbinary(max)
+        /// </summary>
         private void GeoProcessingNode()
         {
             if (_nodesOsm.Count > 0)
             {
                 DataTable _nodesGeo = this.GetTableGeo();
-
                 foreach (KeyValuePair<Node, bool> keyValuePair in _nodesOsm)
                 {
                     if (keyValuePair.Value == true)
@@ -473,11 +492,14 @@ namespace Osm
                         _nodesGeo.Rows.Add(dataRow);
                     }
                 }
-
                 _importer.UploadTableInSqlServerNewThread(_nodesGeo, _connectionString);
             }
         }
 
+        /// <summary>
+        /// Returns the template table for imports node as a varbinary(max) in Sql Server
+        /// </summary>
+        /// <returns>Template table for saving node as a varbinary(max)</returns>
         private DataTable GetTableGeo()
         {
             ConstructDataTable constructDataTable = new ConstructDataTable(_importConfigurator.DataBaseConfig.TableNameGeo);
@@ -485,8 +507,6 @@ namespace Osm
             constructDataTable.AddColumn("bin", TypeDataTable.ByteArray);
             return constructDataTable.GetDataTable();
         }
-
-
 
         /// <summary>
         /// Stores nodes labeled as the storage of geography objects to the database
@@ -504,13 +524,17 @@ namespace Osm
         /// Stores hashes of tags / values​​ and their OSM names
         /// </summary>
         private Dictionary<int, string> _hashTagsValuesOsmString = new Dictionary<int, string>();
-
+        /// <summary>
+        /// Store connection string
+        /// </summary>
         private string _connectionString;
         /// <summary>
         /// Stores a reference to the current configurator imports
         /// </summary>
         private OsmImportConfigurator _importConfigurator;
-
+        /// <summary>
+        /// Sevices class for import data as a DataTable in Sql Server
+        /// </summary>
         private ImporterInSqlServer _importer;
         /// <summary>
         /// Absolute path to the file. pdb
