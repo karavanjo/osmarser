@@ -32,8 +32,8 @@ main bit
 CREATE TABLE dbo.Nodes
 (
 id bigint,
-lat decimal(9,7),
-lot decimal(9,7)
+lat float(24),
+lon float(24)
 )
 CREATE TABLE dbo.Ways
 (
@@ -46,3 +46,16 @@ id bigint,
 idGeo bigint,
 nodeOrWay bit
 )
+
+-- Deletes tables
+/*
+DROP TABLE dbo.Geo
+DROP TABLE dbo.TagsValues
+DROP TABLE dbo.TagsValuesTrans
+DROP TABLE dbo.Nodes
+DROP TABLE dbo.Ways
+DROP TABLE dbo.Relations
+*/
+
+-- Service log file
+-- DBCC SHRINKFILE(osmarser_log, 2)
