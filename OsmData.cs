@@ -23,7 +23,7 @@ namespace Osm
         {
             get { return _dateStamp; }
         }
-        
+
         protected Int64 _id;
         protected DateTime _dateStamp;
     }
@@ -36,11 +36,11 @@ namespace Osm
         public Node(Int64 id, double lat, double lon, DateTime dateTime)
         {
             base._id = id;
-            this._point = new Point(){Lat = lat, Lon = lon};
+            this._point = new Point() { Lat = lat, Lon = lon };
             base._dateStamp = dateTime;
         }
 
-        public void GetLatLon (out double lat, out double lon)
+        public void GetLatLon(out double lat, out double lon)
         {
             lat = _point.Lat;
             lon = _point.Lon;
@@ -67,18 +67,18 @@ namespace Osm
         public Way(Int64 id, DateTime dateTime)
         {
             base._id = id;
-            this._nodesId = new List<Int64>();
+            this._nodes = new List<Node>();
             base._dateStamp = dateTime;
         }
 
-        public void AddIdNode (Int64 idNode)
+        public void AddNode(Node node)
         {
-            _nodesId.Add(idNode);
+            _nodes.Add(node);
         }
-        
+
         public bool IsPolygon()
         {
-            if (_nodesId[0] == _nodesId[_nodesId.Count - 1])
+            if (_nodes.First().Id == _nodes.Last().Id)
             {
                 return true;
             }
@@ -88,162 +88,35 @@ namespace Osm
             }
         }
 
-        public List<long> RefNodes
+        public List<Node> Nodes
         {
-            get { return _nodesId; }
+            get { return _nodes; }
         }
 
-        private List<Int64> _nodesId;
+        private List<Node> _nodes;
     }
 
-    public class Tags
+    /// <summary>
+    /// Class class describes the settings for importing geography object
+    /// </summary>
+    public class GeoType
     {
-        public Tags()
+        public GeoType (GeoTypeOGC geoTypeOgc)
         {
-            _tagsList = new SortedList<string, int>();
-            _counter = 0;
+            _geoTypeOgc = geoTypeOgc;
         }
 
-        public SortedList<string, int> TagsList
+        private GeoTypeOGC _geoTypeOgc;
+        public GeoTypeOGC GeoTypeOGC
         {
-            get { return _tagsList; }
-            set { _tagsList = value; }
+            get { return _geoTypeOgc; }
         }
-
-        public void AddTag(string tagName)
-        {
-            if (!this.IsTagName(tagName))
-                _tagsList.Add(tagName, _counter++);
-        }
-
-        public bool IsTagName(string tagName)
-        {
-            return _tagsList.ContainsKey(tagName);
-        }
-
-        public int IdTag(string tagName)
-        {
-            return _tagsList.Values[_tagsList.IndexOfKey(tagName)];
-        }
-
-        public DataTable GetTableTags()
-        {
-            DataTable tags = new DataTable();
-            DataColumn idTag = new DataColumn("idTag", Type.GetType("System.Int32"));
-            tags.Columns.Add(idTag);
-            DataColumn keyTag = new DataColumn("keyTag", Type.GetType("System.String"));
-            tags.Columns.Add(keyTag);
-            for (int i = 0; i < _tagsList.Count; i++)
-            {
-                DataRow newRow = tags.NewRow();
-                newRow["keyTag"] = _tagsList.Keys[i];
-                newRow["idTag"] = _tagsList.Values[i];
-            }
-            return tags;
-        }
-
-        private SortedList<string, int> _tagsList;
-        private int _counter;
     }
 
-    public class TagValues
+    public enum OsmPrimitiveType
     {
-        public TagValues()
-        {
-            _valuesConcreteTag = new SortedList<int, ValuesConcreteTag>();
-        }
-
-        public void AddValueTag(int idTag, string valueTag)
-        {
-            if (!_valuesConcreteTag.ContainsKey(idTag)) _valuesConcreteTag.Add(idTag, new ValuesConcreteTag());
-            _valuesConcreteTag.Values[_valuesConcreteTag.IndexOfKey(idTag)].AddValue(valueTag);
-        }
-
-        public DataTable GetTableTagValues()
-        {
-            DataTable tagsValues = new DataTable();
-            DataColumn idTag = new DataColumn("idTag", Type.GetType("System.Int32"));
-            tagsValues.Columns.Add(idTag);
-            DataColumn idValue = new DataColumn("idValue", Type.GetType("System.Int32"));
-            tagsValues.Columns.Add(idValue);
-            DataColumn value = new DataColumn("value", Type.GetType("System.String"));
-            tagsValues.Columns.Add(value);
-            for (int i = 0; i < _valuesConcreteTag.Count; i++)
-            {
-                for (int v = 0; v < _valuesConcreteTag[i].ValuesConcreteTagList.Count; v++)
-                {
-                    DataRow newRow = tagsValues.NewRow();
-                    newRow["idTag"] = _valuesConcreteTag.Keys[i];
-                    newRow["idValue"] = _valuesConcreteTag[i].ValuesConcreteTagList.Values[v];
-                    newRow["value"] = _valuesConcreteTag[i].ValuesConcreteTagList.Keys[v];
-                    tagsValues.Rows.Add(newRow);
-                }
-            }
-            return tagsValues;
-        }
-
-        private SortedList<int, ValuesConcreteTag> _valuesConcreteTag;
+        Node,
+        Way,
+        Relation
     }
-
-    public class ValuesConcreteTag
-    {
-        public ValuesConcreteTag()
-        {
-            _valuesConcreteTagList = new SortedList<string, int>();
-            _counter = 0;
-        }
-
-        public SortedList<string, int> ValuesConcreteTagList
-        {
-            get { return _valuesConcreteTagList; }
-            set { _valuesConcreteTagList = value; }
-        }
-
-        public void AddValue(string valueTag)
-        {
-            if (!this.IsValue(valueTag))
-                _valuesConcreteTagList.Add(valueTag, _counter++);
-        }
-
-        public bool IsValue(string valueTag)
-        {
-            return _valuesConcreteTagList.ContainsKey(valueTag);
-        }
-
-        public int IdValue(string valueTag)
-        {
-            return _valuesConcreteTagList.Values[_valuesConcreteTagList.IndexOfKey(valueTag)];
-        }
-
-        private SortedList<string, int> _valuesConcreteTagList;
-        private int _counter;
-    }
-
-
-    public class Tag
-    {
-        public int IdTag { get; set; }
-        public string KeyTag { get; set; }
-    }
-
-    public class TagParameter
-    {
-        public int IdTag { get; set; }
-        public int IdValue { get; set; }
-        public string Value { get; set; }
-    }
-
-    public class GeoTags
-    {
-        public int IdGeo { get; set; }
-        List<GeoTag> TagsAndValue { get; set; }
-    }
-
-    public class GeoTag
-    {
-        public int IdTag { get; set; }
-        public int IdValue { get; set; }
-        public string Value { get; set; }
-    }
-
 }
