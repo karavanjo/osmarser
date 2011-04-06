@@ -258,10 +258,11 @@ namespace Osm
                 for (int nodeRef = 0; nodeRef < osmpbfWay.refs.Count; nodeRef++)
                 {
                     deltaref += osmpbfWay.refs[nodeRef];
-                    way.AddIdNode(deltaref);
+                    way.AddNode(_nodesOsm.Keys.Where(n => n.Id == deltaref).SingleOrDefault());
                 }
 
                 IsImportToDb = false;
+                GeoType geoType = null;
 
                 if (osmpbfWay.keys.Count != 0 || osmpbfWay.keys.Count != 0)
                 {
@@ -271,10 +272,15 @@ namespace Osm
                             primitiveBlock.stringtable.s[Convert.ToInt32(osmpbfWay.keys[keyId])]);
                         val = UTF8Encoding.UTF8.GetString(
                                 primitiveBlock.stringtable.s[Convert.ToInt32(osmpbfWay.vals[keyId])]);
+
                         this.GetHashAndCheckTagsValues(tag, val, out hashTag, out hashValue, out typeValueTag);
+
                         if (typeValueTag != TypeValueTag.NoImport)
                         {
                             IsImportToDb = true;
+
+                            _importConfigurator.GetTypeOGC(OsmPrimitiveType.Way, hashTag, out geoType);
+
                             if (!_hashTagsValuesOsmString.ContainsKey(hashTag)) _hashTagsValuesOsmString.Add(hashTag, tag);
                             if (typeValueTag == TypeValueTag.Hash && !_hashTagsValuesOsmString.ContainsKey(hashValue))
                                 _hashTagsValuesOsmString.Add(hashValue, val);
@@ -282,11 +288,22 @@ namespace Osm
                         }
                     }
                 }
-                _waysOsm.Add(way, IsImportToDb);
+
+                _waysOsm.Add(way, geoType ?? this.WayIsPolygonOrLine(way));
             }
         }
 
-
+        private GeoType WayIsPolygonOrLine(Way way)
+        {
+            if (way.IsPolygon())
+            {
+                return new GeoType(GeoTypeOGC.Polygon);
+            }
+            else
+            {
+                return new GeoType(GeoTypeOGC.LineString);
+            }
+        }
 
         /// <summary>
         /// Reads and parses a relations (OSMPBF.Relation)
@@ -435,12 +452,12 @@ namespace Osm
             int countRow = 0;
             foreach (Way way in _waysOsm.Keys)
             {
-                for (int i = 0; i < way.RefNodes.Count; i++)
+                for (int i = 0; i < way.Nodes.Count; i++)
                 {
                     countRow++;
                     DataRow rowWay = tableWays.NewRow();
                     rowWay["id"] = way.Id;
-                    rowWay["idNode"] = way.RefNodes[i];
+                    rowWay["idNode"] = way.Nodes[i].Id;
                     tableWays.Rows.Add(rowWay);
                     if (countRow == 100000)
                     {
@@ -496,6 +513,14 @@ namespace Osm
             }
         }
 
+        private void GeoProcessingWays()
+        {
+            if (_waysOsm.Count > 0)
+            {
+                DataTable _wayOsm = this.GetTableGeo();
+            }
+        }
+
         /// <summary>
         /// Returns the template table for imports node as a varbinary(max) in Sql Server
         /// </summary>
@@ -515,7 +540,7 @@ namespace Osm
         /// <summary>
         /// Stores ways labeled as the storage of geography objects to the database
         /// </summary>
-        private Dictionary<Way, bool> _waysOsm = new Dictionary<Way, bool>();
+        private Dictionary<Way, GeoType> _waysOsm = new Dictionary<Way, GeoType>();
         /// <summary>
         /// DataTable which store tags and value for froup OsmPrimitive
         /// </summary>
