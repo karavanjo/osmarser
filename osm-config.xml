@@ -91,6 +91,8 @@
 		</nodes>
 		<ways>
 			<t tag="higway" geography="LINE"/>
+			<t tag="waterway" geography="LINE"/>
+			<t tag="railway"  geography="LINE"/>
 			<t tag="building" geography="POLYGON"/>
 		</ways>
 		<relations>
