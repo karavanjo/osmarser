@@ -41,15 +41,18 @@ namespace Osm
         /// <param name="pathFileConfig">The path to the file XML import configuration</param>
         public void Import(string pathFileConfig)
         {
-            _importer = new ImporterInSqlServer();
             _importConfigurator = new OsmImportConfigurator(pathFileConfig);
-            _connectionString = ConfigurationManager.ConnectionStrings[_importConfigurator.DataBaseConfig.ConnectionStringName].ToString();
-            _tagsValues = this.GetTableTagsValue();
+            this.InitializeImporter();
             ReadFilePdb();
-            ImportOsmPrimitiveToDb();
-            this.GeoProcessingNode();
+            // this.ImportOsmPrimitiveToDb();
+            this.ImportGeo();
         }
 
+        private void InitializeImporter()
+        {
+            _importer = new ImporterInSqlServer();
+            _connectionString = ConfigurationManager.ConnectionStrings[_importConfigurator.DataBaseConfig.ConnectionStringName].ToString();
+        }
 
         /// <summary>
         /// Deserializes to the level of primitive blocks (PrimitiveBlock)
@@ -98,11 +101,10 @@ namespace Osm
                     }
                     blockCount++;
                 }
-                if (_tagsValues.Rows.Count > 0)
-                {
-                    _importer.UploadTableInSqlServerNewThread(_tagsValues, _connectionString);
-                    _tagsValues = this.GetTableTagsValue();
-                }
+                //if (_tagsValues.Rows.Count > 0)
+                //{
+                //    this.ImportDataTableInDb(ref _tagsValues, new GetTable(GetTableTagsValue));
+                //}
             }
         }
 
@@ -208,7 +210,7 @@ namespace Osm
                             if (typeValueTag == TypeValueTag.Hash && !_hashTagsValuesOsmString.ContainsKey(hashValue))
                                 _hashTagsValuesOsmString.Add(hashValue, val);
                             IsImportToDb = true;
-                            this.InsertTagsAndValueInTableTagsValues(node.Id, hashTag, hashValue, val, typeValueTag);
+                            // this.InsertTagsAndValueInTableTagsValues(node.Id, hashTag, hashValue, val, typeValueTag);
                         }
                         l += 2;
                     }
@@ -216,7 +218,15 @@ namespace Osm
                 }
 
                 // Check whether there is a tags of an object 
-                _nodesOsm.Add(node, IsImportToDb);
+                if (IsImportToDb)
+                {
+                    node.GeoType = new GeoType(GeoTypeOGC.Point);
+                    _nodesOsm.Add(node.Id, node);
+                }
+                else
+                {
+                    _nodesOsm.Add(node.Id, node);
+                }
             }
 
         }
@@ -258,7 +268,7 @@ namespace Osm
                 for (int nodeRef = 0; nodeRef < osmpbfWay.refs.Count; nodeRef++)
                 {
                     deltaref += osmpbfWay.refs[nodeRef];
-                    way.AddNode(_nodesOsm.Keys.Where(n => n.Id == deltaref).SingleOrDefault());
+                    way.AddNode(_nodesOsm[deltaref]);
                 }
 
                 IsImportToDb = false;
@@ -278,18 +288,31 @@ namespace Osm
                         if (typeValueTag != TypeValueTag.NoImport)
                         {
                             IsImportToDb = true;
-
                             _importConfigurator.GetTypeOGC(OsmPrimitiveType.Way, hashTag, out geoType);
 
                             if (!_hashTagsValuesOsmString.ContainsKey(hashTag)) _hashTagsValuesOsmString.Add(hashTag, tag);
                             if (typeValueTag == TypeValueTag.Hash && !_hashTagsValuesOsmString.ContainsKey(hashValue))
                                 _hashTagsValuesOsmString.Add(hashValue, val);
-                            this.InsertTagsAndValueInTableTagsValues(way.Id, hashTag, hashValue, val, typeValueTag);
+                            // this.InsertTagsAndValueInTableTagsValues(way.Id, hashTag, hashValue, val, typeValueTag);
                         }
                     }
                 }
 
-                _waysOsm.Add(way, geoType ?? this.WayIsPolygonOrLine(way));
+                //// DEBUG
+                //Console.WriteLine(DateTime.Now + " Way - " + way.Id + ", " + way.Nodes.Count + " nodes");
+                if (IsImportToDb)
+                {
+                    if (geoType != null)
+                    {
+                        way.GeoType = geoType;
+                        _waysOsm.Add(way.Id, way);
+                    }
+                    else
+                    {
+                        way.GeoType = this.WayIsPolygonOrLine(way);
+                        _waysOsm.Add(way.Id, way);
+                    }
+                }
             }
         }
 
@@ -343,6 +366,8 @@ namespace Osm
         /// <param name="typeValueTag">Type value tag</param>
         private void InsertTagsAndValueInTableTagsValues(long idGeo, int hashTag, int hashValue, string value, TypeValueTag typeValueTag)
         {
+            if (_tagsValues == null)
+                _tagsValues = this.GetTableTagsValue();
             DataRow row = _tagsValues.NewRow();
             row["idGeo"] = idGeo;
             row["tag"] = hashTag;
@@ -372,10 +397,9 @@ namespace Osm
             }
             _tagsValues.Rows.Add(row);
 
-            if (_tagsValues.Rows.Count == 100000)
+            if (_tagsValues.Rows.Count == COUNT_ROW)
             {
-                _importer.UploadTableInSqlServerNewThread(_tagsValues, _connectionString);
-                _tagsValues = this.GetTableTagsValue();
+                this.ImportDataTableInDb(ref _tagsValues, new GetTable(GetTableTagsValue));
             }
         }
 
@@ -412,7 +436,7 @@ namespace Osm
             DataTable tableNodes = this.GetTableNodes();
             int countRow = 0;
             int countNodes = _nodesOsm.Keys.Count;
-            foreach (Node node in _nodesOsm.Keys)
+            foreach (Node node in _nodesOsm.Values)
             {
                 countRow++;
                 DataRow rowNode = tableNodes.NewRow();
@@ -420,14 +444,13 @@ namespace Osm
                 rowNode["lat"] = node.Latitude;
                 rowNode["lon"] = node.Longtitude;
                 tableNodes.Rows.Add(rowNode);
-                if (countRow == 100000)
+                if (countRow == COUNT_ROW)
                 {
-                    _importer.UploadTableInSqlServerNewThread(tableNodes, _connectionString, shedule: true);
-                    tableNodes = this.GetTableNodes();
+                    this.ImportDataTableInDb(ref tableNodes, GetTableNodes);
                     countRow = 0;
                 }
             }
-            if (tableNodes.Rows.Count > 0) _importer.UploadTableInSqlServerNewThread(tableNodes, _connectionString, shedule: true);
+            if (tableNodes.Rows.Count > 0) this.ImportDataTableInDb(ref tableNodes, GetTableNodes);
         }
 
         /// <summary>
@@ -450,7 +473,7 @@ namespace Osm
         {
             DataTable tableWays = this.GetTableWays();
             int countRow = 0;
-            foreach (Way way in _waysOsm.Keys)
+            foreach (Way way in _waysOsm.Values)
             {
                 for (int i = 0; i < way.Nodes.Count; i++)
                 {
@@ -459,15 +482,14 @@ namespace Osm
                     rowWay["id"] = way.Id;
                     rowWay["idNode"] = way.Nodes[i].Id;
                     tableWays.Rows.Add(rowWay);
-                    if (countRow == 100000)
+                    if (countRow == COUNT_ROW)
                     {
-                        _importer.UploadTableInSqlServerNewThread(tableWays, _connectionString, shedule: true);
-                        tableWays = this.GetTableWays();
+                        this.ImportDataTableInDb(ref tableWays, GetTableWays);
                         countRow = 0;
                     }
                 }
             }
-            if (tableWays.Rows.Count > 0) _importer.UploadTableInSqlServerNewThread(tableWays, _connectionString, shedule: true);
+            if (tableWays.Rows.Count > 0) this.ImportDataTableInDb(ref tableWays, GetTableWays);
         }
 
         /// <summary>
@@ -482,42 +504,68 @@ namespace Osm
             return ways.GetDataTable();
         }
 
+        private void ImportGeo()
+        {
+            this.ImportGeoNode();
+            this.ImportGeoWays();
+        }
+
         /// <summary>
         /// Imports node (geography POINT) in Sql Server as a varbinary(max)
         /// </summary>
-        private void GeoProcessingNode()
+        private void ImportGeoNode()
         {
             if (_nodesOsm.Count > 0)
             {
-                DataTable _nodesGeo = this.GetTableGeo();
-                foreach (KeyValuePair<Node, bool> keyValuePair in _nodesOsm)
+                DataTable nodesGeo = this.GetTableGeo();
+                int countRow = 0;
+                foreach (KeyValuePair<Int64, Node> keyValuePair in _nodesOsm)
                 {
-                    if (keyValuePair.Value == true)
+                    countRow++;
+                    if (keyValuePair.Value.GeoType == null) continue;
+                    DataRow dataRow = nodesGeo.NewRow();
+                    dataRow["idGeo"] = keyValuePair.Key;
+                    dataRow["bin"] = GeoProcessing.GeoProcessingNode(keyValuePair.Value);
+                    dataRow["typeGeo"] = (Int16)GeoTypeOGC.Point;
+                    nodesGeo.Rows.Add(dataRow);
+                    if (countRow == COUNT_ROW)
                     {
-                        SqlGeography geo = new SqlGeography();
-                        SqlGeographyBuilder geographyBuilder = new SqlGeographyBuilder();
-                        geographyBuilder.SetSrid(4326);
-                        geographyBuilder.BeginGeography(OpenGisGeographyType.Point);
-                        geographyBuilder.BeginFigure(keyValuePair.Key.Latitude, keyValuePair.Key.Longtitude);
-                        geographyBuilder.EndFigure();
-                        geographyBuilder.EndGeography();
-                        geo = geographyBuilder.ConstructedGeography;
-
-                        DataRow dataRow = _nodesGeo.NewRow();
-                        dataRow["idGeo"] = keyValuePair.Key.Id;
-                        dataRow["bin"] = geo.STAsBinary().Buffer;
-                        _nodesGeo.Rows.Add(dataRow);
+                        this.ImportDataTableInDb(ref nodesGeo, GetTableGeo);
+                        countRow = 0;
                     }
                 }
-                _importer.UploadTableInSqlServerNewThread(_nodesGeo, _connectionString);
+                _importer.UploadTableInSqlServer(nodesGeo, _connectionString);
+                nodesGeo.Dispose();
+                // GC.Collect();
             }
         }
 
-        private void GeoProcessingWays()
+        private void ImportGeoWays()
         {
             if (_waysOsm.Count > 0)
             {
-                DataTable _wayOsm = this.GetTableGeo();
+                DataTable waysOsm = this.GetTableGeo();
+                int countRow = 0;
+                foreach (KeyValuePair<Int64, Way> keyValuePair in _waysOsm)
+                {
+                    countRow++;
+                    if (keyValuePair.Value.GeoType == null) continue;
+                    GeoTypeOGC geoTypeOgc = keyValuePair.Value.GeoType.GeoTypeOGC;
+                    byte[] way = GeoProcessing.GeoProcessingWay(keyValuePair.Value, geoTypeOgc);
+                    if (way == null) continue;
+                    DataRow dataRow = waysOsm.NewRow();
+                    dataRow["idGeo"] = keyValuePair.Key;
+                    dataRow["bin"] = way;
+                    dataRow["typeGeo"] = (Int16)geoTypeOgc;
+                    waysOsm.Rows.Add(dataRow);
+                    if (countRow == COUNT_ROW)
+                    {
+                        this.ImportDataTableInDb(ref waysOsm, new GetTable(GetTableGeo));
+                        countRow = 0;
+                    }
+                }
+                if (waysOsm.Rows.Count > 0)
+                    this.ImportDataTableInDb(ref waysOsm, new GetTable(GetTableGeo));
             }
         }
 
@@ -530,17 +578,29 @@ namespace Osm
             ConstructDataTable constructDataTable = new ConstructDataTable(_importConfigurator.DataBaseConfig.TableNameGeo);
             constructDataTable.AddColumn("idGeo", TypeDataTable.Int64);
             constructDataTable.AddColumn("bin", TypeDataTable.ByteArray);
+            constructDataTable.AddColumn("typeGeo", TypeDataTable.Int16);
             return constructDataTable.GetDataTable();
+        }
+
+        private delegate DataTable GetTable();
+
+        private void ImportDataTableInDb(ref DataTable dataTableImportable, GetTable callGetTableImportableTemplate)
+        {
+            if (_importer == null) this.InitializeImporter();
+            _importer.UploadTableInSqlServer(dataTableImportable, _connectionString);
+            dataTableImportable.Dispose();
+            dataTableImportable = callGetTableImportableTemplate();
+            GC.Collect();
         }
 
         /// <summary>
         /// Stores nodes labeled as the storage of geography objects to the database
         /// </summary>
-        private Dictionary<Node, bool> _nodesOsm = new Dictionary<Node, bool>();
+        private Dictionary<Int64, Node> _nodesOsm = new Dictionary<Int64, Node>();
         /// <summary>
         /// Stores ways labeled as the storage of geography objects to the database
         /// </summary>
-        private Dictionary<Way, GeoType> _waysOsm = new Dictionary<Way, GeoType>();
+        private Dictionary<Int64, Way> _waysOsm = new Dictionary<Int64, Way>();
         /// <summary>
         /// DataTable which store tags and value for froup OsmPrimitive
         /// </summary>
@@ -565,5 +625,7 @@ namespace Osm
         /// Absolute path to the file. pdb
         /// </summary>
         private string _pathFilePdb;
+
+        private const int COUNT_ROW = 150000;
     }
 }
