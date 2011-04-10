@@ -30,6 +30,15 @@ namespace Osm
             set { _shedule = value; }
         }
 
+        public void UploadTableInSqlServer(DataTable dataTable, string connectionString,
+            string destinationNameTable = "",
+            int timeout = 100)
+        {
+            if (destinationNameTable == "") destinationNameTable = dataTable.TableName;
+            ImportTable importTable = new ImportTable(dataTable, connectionString, destinationNameTable, timeout);
+            ImporterInSqlServer.UploadTableInSqlServer(importTable);
+        }
+
         public void UploadTableInSqlServerNewThread(DataTable dataTable, string connectionString,
             string destinationNameTable = "",
             int timeout = 100,
