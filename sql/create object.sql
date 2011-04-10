@@ -1,11 +1,19 @@
-﻿-- Script creates the tables needed to store geographic features and tag values
+﻿DBCC SHRINKFILE(osmarser_log, 2)
+DROP TABLE dbo.Geo
+DROP TABLE dbo.TagsValues
+DROP TABLE dbo.TagsValuesTrans
+DROP TABLE dbo.Nodes
+DROP TABLE dbo.Ways
+DROP TABLE dbo.Relations
+-- Script creates the tables needed to store geographic features and tag values
 
 -- Create tables to store data in a geographical form
 CREATE TABLE dbo.Geo
 (
-idGeo bigint,
-geo geography,
-bin varbinary(max)
+idGeo bigint PRIMARY KEY,
+geo geometry,
+bin varbinary(max),
+typeGeo smallint
 )
 
 -- Create tables to store data Tags and Tag values
