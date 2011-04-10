@@ -24,6 +24,9 @@ namespace Osm
             get { return _dateStamp; }
         }
 
+        public GeoType GeoType
+        { get; set; }
+
         protected Int64 _id;
         protected DateTime _dateStamp;
     }
@@ -78,7 +81,7 @@ namespace Osm
 
         public bool IsPolygon()
         {
-            if (_nodes.First().Id == _nodes.Last().Id)
+            if (_nodes.First().Id == _nodes.Last().Id && _nodes.Count > 1)
             {
                 return true;
             }
@@ -101,7 +104,7 @@ namespace Osm
     /// </summary>
     public class GeoType
     {
-        public GeoType (GeoTypeOGC geoTypeOgc)
+        public GeoType(GeoTypeOGC geoTypeOgc)
         {
             _geoTypeOgc = geoTypeOgc;
         }
