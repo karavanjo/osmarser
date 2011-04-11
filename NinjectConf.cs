@@ -21,7 +21,7 @@ namespace Osm
     {
         public override void Load()
         {
-            Bind<ILoggeble>().To<LogToConsole>();
+            Bind<ILoggeble>().To<LogToFile>();
         }
     }
 }

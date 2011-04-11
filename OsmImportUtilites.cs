@@ -48,22 +48,10 @@ namespace Osm
             ImportTable importTable = new ImportTable(dataTable, connectionString, destinationNameTable, timeout);
             if (shedule)
             {
-                // ----- DEBUG
-                Console.WriteLine("Upload task in Shedule - table " 
-                    + importTable.DestinationNameTable 
-                    + " (" + importTable.DataTable.Rows.Count + ")");
-                // ------
-
                 new Thread(this.ImportBySheduller).Start(importTable);
             }
             else
             {
-                // ----- DEBUG
-                Console.WriteLine("Task without Shedule - table "
-                    + importTable.DestinationNameTable
-                    + " (" + importTable.DataTable.Rows.Count + ")");
-                // ------
-
                 new Thread(this.ImportWithoutSheduller).Start(importTable);
             }
         }
@@ -85,10 +73,6 @@ namespace Osm
             }
             catch (Exception e)
             {
-                // ----- DEBUG
-                Console.WriteLine("Exception " + 
-                    e.Message);
-                // ------
                 int i;
                 //throw new AbandonedMutexException();
             }
@@ -105,7 +89,7 @@ namespace Osm
             ImportTable _importTable = (ImportTable)importTable;
             
             // ----- DEBUG
-            Console.WriteLine("Start upload - table "
+            Log.Write("Start upload - table "
                 + _importTable.DestinationNameTable
                 + " (" + _importTable.DataTable.Rows.Count + ")");
             // ------
@@ -123,7 +107,7 @@ namespace Osm
             }
 
             // ----- DEBUG
-            Console.WriteLine("End upload - table "
+            Log.Write("End upload - table "
                 + _importTable.DestinationNameTable
                 + " (" + _importTable.DataTable.Rows.Count + ")");
             // ------
@@ -230,6 +214,8 @@ namespace Osm
                 case TypeDataTable.String:
                     return Type.GetType("System.String");
                     break;
+                case TypeDataTable.DateTime:
+                    return Type.GetType("System.DateTime");
             }
 
             throw new TypeLoadException("Type " + typeDataTable + " not supported");
@@ -252,6 +238,7 @@ namespace Osm
         Int32,
         Int64,
         Double,
-        String
+        String,
+        DateTime
     }
 }

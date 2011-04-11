@@ -66,13 +66,13 @@ namespace Osm
                     }
                     else
                     {
-                        Log.Write(osmPrimitive.GetType() + " " + osmPrimitive.Id + "not valid");
+                        Log.Write(osmPrimitive.GetType() + " " + osmPrimitive.Id + " not valid");
                         return null;
                     }
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine("Error constructed Geometry LINE STRING: " + e.Message);
+                    Log.Write(osmPrimitive.GetType() + " " + osmPrimitive.Id + " Error constructed Geometry LINE STRING: " + e.Message);
                     return null;
                 }
             }
@@ -108,13 +108,13 @@ namespace Osm
                     }
                     else
                     {
-                        Log.Write(osmPrimitive.GetType() + " " + osmPrimitive.Id + "not valid");
+                        Log.Write(osmPrimitive.GetType() + " " + osmPrimitive.Id + " not valid");
                         return null;
                     }
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine("Error constructed Geometry POLYGON: " + e.Message);
+                    Log.Write(osmPrimitive.GetType() + " " + osmPrimitive.Id + " Error constructed Geometry POLYGON: " + e.Message);
                     return null;
                 }
             }
