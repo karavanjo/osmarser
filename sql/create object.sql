@@ -41,18 +41,22 @@ CREATE TABLE dbo.Nodes
 (
 id bigint,
 lat float(24),
-lon float(24)
+lon float(24),
+times datetime
 )
 CREATE TABLE dbo.Ways
 (
 id bigint,
-idNode bigint
+idNode bigint,
+times datetime
 )
 CREATE TABLE dbo.Relations
 (
 id bigint,
-idGeo bigint,
-nodeOrWay bit
+ref bigint,
+memberType bit,
+memberRole int,
+times datetime
 )
 
 -- Deletes tables
