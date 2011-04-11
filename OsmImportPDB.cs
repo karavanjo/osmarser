@@ -44,7 +44,7 @@ namespace Osm
             _importConfigurator = new OsmImportConfigurator(pathFileConfig);
             this.InitializeImporter();
             ReadFilePdb();
-            // this.ImportOsmPrimitiveToDb();
+            this.ImportOsmPrimitiveToDb();
             this.ImportGeo();
         }
 
@@ -210,7 +210,7 @@ namespace Osm
                             if (typeValueTag == TypeValueTag.Hash && !_hashTagsValuesOsmString.ContainsKey(hashValue))
                                 _hashTagsValuesOsmString.Add(hashValue, val);
                             IsImportToDb = true;
-                            // this.InsertTagsAndValueInTableTagsValues(node.Id, hashTag, hashValue, val, typeValueTag);
+                            this.InsertTagsAndValueInTableTagsValues(node.Id, hashTag, hashValue, val, typeValueTag);
                         }
                         l += 2;
                     }
@@ -293,7 +293,7 @@ namespace Osm
                             if (!_hashTagsValuesOsmString.ContainsKey(hashTag)) _hashTagsValuesOsmString.Add(hashTag, tag);
                             if (typeValueTag == TypeValueTag.Hash && !_hashTagsValuesOsmString.ContainsKey(hashValue))
                                 _hashTagsValuesOsmString.Add(hashValue, val);
-                            // this.InsertTagsAndValueInTableTagsValues(way.Id, hashTag, hashValue, val, typeValueTag);
+                            this.InsertTagsAndValueInTableTagsValues(way.Id, hashTag, hashValue, val, typeValueTag);
                         }
                     }
                 }
@@ -443,6 +443,7 @@ namespace Osm
                 rowNode["id"] = node.Id;
                 rowNode["lat"] = node.Latitude;
                 rowNode["lon"] = node.Longtitude;
+                rowNode["times"] = node.DateStamp;
                 tableNodes.Rows.Add(rowNode);
                 if (countRow == COUNT_ROW)
                 {
@@ -463,6 +464,7 @@ namespace Osm
             nodes.AddColumn("id", TypeDataTable.Int64);
             nodes.AddColumn("lat", TypeDataTable.Double);
             nodes.AddColumn("lon", TypeDataTable.Double);
+            nodes.AddColumn("times", TypeDataTable.DateTime);
             return nodes.GetDataTable();
         }
 
@@ -481,6 +483,7 @@ namespace Osm
                     DataRow rowWay = tableWays.NewRow();
                     rowWay["id"] = way.Id;
                     rowWay["idNode"] = way.Nodes[i].Id;
+                    rowWay["times"] = way.DateStamp;
                     tableWays.Rows.Add(rowWay);
                     if (countRow == COUNT_ROW)
                     {
@@ -501,6 +504,7 @@ namespace Osm
             ConstructDataTable ways = new ConstructDataTable("dbo.Ways");
             ways.AddColumn("id", TypeDataTable.Int64);
             ways.AddColumn("idNode", TypeDataTable.Int64);
+            ways.AddColumn("times", TypeDataTable.DateTime);
             return ways.GetDataTable();
         }
 
@@ -534,9 +538,8 @@ namespace Osm
                         countRow = 0;
                     }
                 }
-                _importer.UploadTableInSqlServer(nodesGeo, _connectionString);
-                nodesGeo.Dispose();
-                // GC.Collect();
+                if (nodesGeo.Rows.Count > 0) 
+                    this.ImportDataTableInDb(ref nodesGeo, GetTableGeo);
             }
         }
 
