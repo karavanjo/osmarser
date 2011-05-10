@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using Ninject;
 
-namespace Osm
+namespace OsmImportToSqlServer
 {
     public interface ILoggeble
     {

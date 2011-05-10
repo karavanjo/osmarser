@@ -7,12 +7,17 @@ using System.Linq;
 using System.Text;
 using System.IO;
 using System.Threading;
+using OsmImportToSqlServer.Config;
+using OsmImportToSqlServer.OsmData;
+using OsmImportToSqlServer.Repositories;
 using OSMPBF;
 using ProtoBuf;
 using Microsoft.SqlServer.Types;
 using System.Data.SqlTypes;
+using Node = OsmImportToSqlServer.OsmData.Node;
+using Way = OsmImportToSqlServer.OsmData.Way;
 
-namespace Osm
+namespace OsmImportToSqlServer
 {
     /// <summary>
     /// Class that performs the import file .pdb in EMPTY database SQL Server
@@ -39,11 +44,11 @@ namespace Osm
         /// Starts reading data from a file. pdb to the database
         /// </summary>
         /// <param name="pathFileConfig">The path to the file XML import configuration</param>
-        public void Import(string pathFileConfig)
+        public void Import(OsmImportConfigurator osmImportConfigurator)
         {
-            _importConfigurator = new OsmImportConfigurator(pathFileConfig);
+            _importConfigurator = osmImportConfigurator;
             this.InitializeImporter();
-            ReadFilePdb();
+            ReadFile();
             this.ImportOsmPrimitiveToDb();
             this.ImportGeo();
         }
@@ -52,6 +57,12 @@ namespace Osm
         {
             _importer = new ImporterInSqlServer();
             _connectionString = ConfigurationManager.ConnectionStrings[_importConfigurator.DataBaseConfig.ConnectionStringName].ToString();
+        }
+
+        private void ReadFile()
+        {
+            //_tagsValueRepository = new TagsValueRepository();
+            this.ReadFilePdb();
         }
 
         /// <summary>
@@ -101,10 +112,9 @@ namespace Osm
                     }
                     blockCount++;
                 }
-                //if (_tagsValues.Rows.Count > 0)
-                //{
-                //    this.ImportDataTableInDb(ref _tagsValues, new GetTable(GetTableTagsValue));
-                //}
+                if (_tagsValues.Rows.Count > 0) this.ImportDataTableInDb(ref _tagsValues, new GetTable(GetTableTagsValue));
+
+                if (_tagsValuesTrans.Rows.Count > 0) this.ImportDataTableInDb(ref _tagsValuesTrans, new GetTable(GetTableTagsValuesTrans));
             }
         }
 
@@ -156,10 +166,14 @@ namespace Osm
             long deltauser_sid = 0;
             int dateGranularity = primitiveBlock.date_granularity;
 
-            string tag;
+            string key;
             string val;
             int hashTag;
             int hashValue;
+
+            int idKey;
+            int idValue;
+
             TypeValueTag typeValueTag;
 
             // Is it possible to import on the basis of the presence of significant tags
@@ -186,7 +200,7 @@ namespace Osm
 
                 }
 
-                Osm.Node node = new Node(deltaid, latOffset + (deltalat * granularity),
+                Node node = new Node(deltaid, latOffset + (deltalat * granularity),
                                              lonOffset + (deltalon * granularity), stamp);
 
                 IsImportToDb = false;
@@ -199,18 +213,26 @@ namespace Osm
                         {
                             has_tags++;
                         }
-                        tag = UTF8Encoding.UTF8.GetString(
+                        key = UTF8Encoding.UTF8.GetString(
                             primitiveBlock.stringtable.s[denseNodes.keys_vals[l]]);
                         val = UTF8Encoding.UTF8.GetString(
                                 primitiveBlock.stringtable.s[denseNodes.keys_vals[l + 1]]);
-                        this.GetHashAndCheckTagsValues(tag, val, out hashTag, out hashValue, out typeValueTag);
+
+                        OsmRepository.TagsRepository.AddTag(key, val, out idKey, out idValue, out typeValueTag);
+
                         if (typeValueTag != TypeValueTag.NoImport)
                         {
-                            if (!_hashTagsValuesOsmString.ContainsKey(hashTag)) _hashTagsValuesOsmString.Add(hashTag, tag);
-                            if (typeValueTag == TypeValueTag.Hash && !_hashTagsValuesOsmString.ContainsKey(hashValue))
-                                _hashTagsValuesOsmString.Add(hashValue, val);
+                            //TagValue tagValue = new TagValue() { TagHash = idKey, ValueHash = idValue };
+                            //bool isValueHash;
+                            //if (!_tagsValuesHash.TryGetValue(tagValue, out isValueHash))
+                            //{
+                                //isValueHash = typeValueTag == TypeValueTag.Id;
+                                //_tagsValuesHash.Add(tagValue, isValueHash);
+                                //this.InsertTagsValueTrans(idKey, idValue, typeValueTag, key, val);
+                            //}
+
                             IsImportToDb = true;
-                            this.InsertTagsAndValueInTableTagsValues(node.Id, hashTag, hashValue, val, typeValueTag);
+                            this.InsertTagsAndValue(node.Id, idKey, idValue, val, typeValueTag);
                         }
                         l += 2;
                     }
@@ -227,6 +249,7 @@ namespace Osm
                 {
                     _nodesOsm.Add(node.Id, node);
                 }
+
             }
 
         }
@@ -241,10 +264,8 @@ namespace Osm
 
             long second = 0;
 
-            string tag;
-            string val;
-            int hashTag;
-            int hashValue;
+            string key, val;
+            int idKey, idValue;
 
             TypeValueTag typeValueTag;
 
@@ -264,7 +285,7 @@ namespace Osm
                     stamp = this.timeEpoche.AddSeconds(second);
                 }
                 long deltaref = 0;
-                Osm.Way way = new Way(osmpbfWay.id, stamp);
+                Way way = new Way(osmpbfWay.id, stamp);
                 for (int nodeRef = 0; nodeRef < osmpbfWay.refs.Count; nodeRef++)
                 {
                     deltaref += osmpbfWay.refs[nodeRef];
@@ -278,22 +299,43 @@ namespace Osm
                 {
                     for (int keyId = 0; keyId < osmpbfWay.keys.Count; keyId++)
                     {
-                        tag = UTF8Encoding.UTF8.GetString(
+                        key = UTF8Encoding.UTF8.GetString(
                             primitiveBlock.stringtable.s[Convert.ToInt32(osmpbfWay.keys[keyId])]);
                         val = UTF8Encoding.UTF8.GetString(
                                 primitiveBlock.stringtable.s[Convert.ToInt32(osmpbfWay.vals[keyId])]);
 
-                        this.GetHashAndCheckTagsValues(tag, val, out hashTag, out hashValue, out typeValueTag);
+                        //this.GetIdAndCheckTagsValues(tag, val, out hashTag, out hashValue, out typeValueTag);
+
+                        //if (typeValueTag != TypeValueTag.NoImport)
+                        //{
+                        //    TagValue tagValue = new TagValue() { TagHash = hashTag, ValueHash = hashValue };
+                        //    bool isValueHash;
+                        //    if (!_tagsValuesHash.TryGetValue(tagValue, out isValueHash))
+                        //    {
+                        //        isValueHash = typeValueTag == TypeValueTag.Id;
+                        //        _tagsValuesHash.Add(tagValue, isValueHash);
+                        //        this.InsertTagsValueTrans(tagValue, isValueHash, tag, val);
+                        //    }
+
+                        //    IsImportToDb = true;
+                        //    this.InsertTagsAndValue(way.Id, hashTag, hashValue, val, typeValueTag);
+                        //}
+
+                        OsmRepository.TagsRepository.AddTag(key, val, out idKey, out idValue, out typeValueTag);
 
                         if (typeValueTag != TypeValueTag.NoImport)
                         {
-                            IsImportToDb = true;
-                            _importConfigurator.GetTypeOGC(OsmPrimitiveType.Way, hashTag, out geoType);
+                            //TagValue tagValue = new TagValue() { TagHash = idKey, ValueHash = idValue };
+                            //bool isValueHash;
+                            //if (!_tagsValuesHash.TryGetValue(tagValue, out isValueHash))
+                            //{
+                            //isValueHash = typeValueTag == TypeValueTag.Id;
+                            //_tagsValuesHash.Add(tagValue, isValueHash);
+                            //this.InsertTagsValueTrans(idKey, idValue, typeValueTag, key, val);
+                            //}
 
-                            if (!_hashTagsValuesOsmString.ContainsKey(hashTag)) _hashTagsValuesOsmString.Add(hashTag, tag);
-                            if (typeValueTag == TypeValueTag.Hash && !_hashTagsValuesOsmString.ContainsKey(hashValue))
-                                _hashTagsValuesOsmString.Add(hashValue, val);
-                            this.InsertTagsAndValueInTableTagsValues(way.Id, hashTag, hashValue, val, typeValueTag);
+                            IsImportToDb = true;
+                            this.InsertTagsAndValue(way.Id, idKey, idValue, val, typeValueTag);
                         }
                     }
                 }
@@ -313,6 +355,8 @@ namespace Osm
                         _waysOsm.Add(way.Id, way);
                     }
                 }
+
+
             }
         }
 
@@ -336,47 +380,47 @@ namespace Osm
         {
             for (int r = 0; r < relations.Count; r++)
             {
-
+                
             }
         }
 
-        /// <summary>
-        /// Checks the type of tag values​​, calculates the hash value of tags and their values
-        /// </summary>
-        /// <param name="tag">OSM tag</param>
-        /// <param name="value">OSM tag value</param>
-        /// <param name="hashTag">Hash OSM tag</param>
-        /// <param name="hashValue">Hash OSM tag value</param>
-        /// <param name="typeValueTag">Type tag value</param>
-        private void GetHashAndCheckTagsValues(string tag, string value, out int hashTag, out int hashValue, out TypeValueTag typeValueTag)
-        {
-            hashTag = OsmImportUtilites.GetHash(tag);
-            hashValue = 0;
-            typeValueTag = _importConfigurator.GetTypeValueTag(tag);
-            if (typeValueTag == TypeValueTag.Hash) hashValue = OsmImportUtilites.GetHash(value);
-        }
+        ///// <summary>
+        ///// Checks the type of tag values​​, calculates the hash value of tags and their values
+        ///// </summary>
+        ///// <param name="tag">OSM tag</param>
+        ///// <param name="value">OSM tag value</param>
+        ///// <param name="hashTag">Hash OSM tag</param>
+        ///// <param name="hashValue">Hash OSM tag value</param>
+        ///// <param name="typeValueTag">Type tag value</param>
+        //private void GetIdAndCheckTagsValues(string tag, string value, out int idTag, out int idValue, out TypeValueTag typeValueTag)
+        //{
+        //    _tagsValueRepository.AddTag(tag, out idTag);
+        //    idValue = 0;
+        //    typeValueTag = _importConfigurator.GetTypeValueTag(tag);
+        //    if (typeValueTag == TypeValueTag.Id) _tagsValueRepository.AddValue(value, out idValue);
+        //}
 
         /// <summary>
         /// Insert row in DataTable _tagsValues
         /// </summary>
         /// <param name="idGeo">Id OsmPrimitive, which save as geography type in database</param>
-        /// <param name="hashTag">Hash tag</param>
-        /// <param name="hashValue">Yash value tag</param>
+        /// <param name="idKey">Hash tag</param>
+        /// <param name="idValue">Yash value tag</param>
         /// <param name="value">String value tag value</param>
         /// <param name="typeValueTag">Type value tag</param>
-        private void InsertTagsAndValueInTableTagsValues(long idGeo, int hashTag, int hashValue, string value, TypeValueTag typeValueTag)
+        private void InsertTagsAndValue(long idGeo, int idKey, int idValue, string value, TypeValueTag typeValueTag)
         {
             if (_tagsValues == null)
                 _tagsValues = this.GetTableTagsValue();
             DataRow row = _tagsValues.NewRow();
             row["idGeo"] = idGeo;
-            row["tag"] = hashTag;
+            row["tag"] = idKey;
 
             switch (typeValueTag)
             {
-                case TypeValueTag.Hash:
-                    row["vHash"] = hashValue;
-                    row["vType"] = Convert.ToInt16(TypeValueTag.Hash);
+                case TypeValueTag.Id:
+                    row["vHash"] = idValue;
+                    row["vType"] = Convert.ToInt16(TypeValueTag.Id);
                     break;
                 case TypeValueTag.Int:
                     int valueInt = 0;
@@ -401,6 +445,81 @@ namespace Osm
             {
                 this.ImportDataTableInDb(ref _tagsValues, new GetTable(GetTableTagsValue));
             }
+        }
+
+        //private void InsertTagsValueTrans(TagValue tagValue, bool isValueHash, string tag, string value)
+        //{
+        //    if (_tagsValuesTrans == null)
+        //        _tagsValuesTrans = this.GetTableTagsValuesTrans();
+        //    DataRow row = _tagsValuesTrans.NewRow();
+        //    row["tagHash"] = tagValue.TagHash;
+        //    if (isValueHash)
+        //    {
+        //        row["typeTrans"] = TagValueTransType.TagAndValue;
+        //        row["valueHash"] = tagValue.ValueHash;
+        //        row["valTrans"] = value;
+        //    }
+        //    else
+        //    {
+        //        row["typeTrans"] = TagValueTransType.OnlyTag;
+        //    }
+        //    row["tagTrans"] = tag;
+
+        //    row["LCID"] = -1;
+
+        //    _tagsValuesTrans.Rows.Add(row);
+
+        //    if (_tagsValuesTrans.Rows.Count == COUNT_ROW)
+        //    {
+        //        this.ImportDataTableInDb(ref _tagsValuesTrans, new GetTable(GetTableTagsValuesTrans));
+        //    }
+        //}
+
+        private void InsertTagsValueTrans(int idKey, int idValue, TypeValueTag typeValueTag, 
+            string key, string value)
+        {
+            if (_tagsValuesTrans == null)
+                _tagsValuesTrans = this.GetTableTagsValuesTrans();
+            DataRow row = _tagsValuesTrans.NewRow();
+            row["tagHash"] = idKey;
+            if (typeValueTag==TypeValueTag.Id)
+            {
+                row["typeTrans"] = TagValueTransType.TagAndValue;
+                row["valueHash"] = idValue;
+                row["valTrans"] = value;
+            }
+            else
+            {
+                row["typeTrans"] = TagValueTransType.OnlyTag;
+            }
+            row["tagTrans"] = key;
+
+            row["LCID"] = -1;
+
+            _tagsValuesTrans.Rows.Add(row);
+
+            if (_tagsValuesTrans.Rows.Count == COUNT_ROW)
+            {
+                this.ImportDataTableInDb(ref _tagsValuesTrans, new GetTable(GetTableTagsValuesTrans));
+            }
+        }
+
+        private DataTable GetTableTagsValuesTrans()
+        {
+            ConstructDataTable constructDataTable = new ConstructDataTable("dbo.TagsValuesTrans");
+            constructDataTable.AddColumn("tagHash", TypeDataTable.Int32);
+            constructDataTable.AddColumn("valueHash", TypeDataTable.Int32);
+            constructDataTable.AddColumn("tagTrans", TypeDataTable.String);
+            constructDataTable.AddColumn("valTrans", TypeDataTable.String);
+            constructDataTable.AddColumn("LCID", TypeDataTable.Int16);
+            constructDataTable.AddColumn("typeTrans", TypeDataTable.Byte);
+
+            return constructDataTable.GetDataTable();
+        }
+
+        private void InsertTags()
+        {
+            
         }
 
         /// <summary>
@@ -538,7 +657,7 @@ namespace Osm
                         countRow = 0;
                     }
                 }
-                if (nodesGeo.Rows.Count > 0) 
+                if (nodesGeo.Rows.Count > 0)
                     this.ImportDataTableInDb(ref nodesGeo, GetTableGeo);
             }
         }
@@ -596,6 +715,8 @@ namespace Osm
             GC.Collect();
         }
 
+
+
         /// <summary>
         /// Stores nodes labeled as the storage of geography objects to the database
         /// </summary>
@@ -609,9 +730,15 @@ namespace Osm
         /// </summary>
         private DataTable _tagsValues;
         /// <summary>
-        /// Stores hashes of tags / values​​ and their OSM names
+        /// DataTable which store Openstreetmaps value tags / tags value
         /// </summary>
-        private Dictionary<int, string> _hashTagsValuesOsmString = new Dictionary<int, string>();
+        private DataTable _tagsValuesTrans;
+        /// <summary>
+        /// Stores a pair of hashes tags / values
+        /// </summary>
+        private Dictionary<TagValue, bool> _tagsValuesHash = new Dictionary<TagValue, bool>();
+
+        //private TagsValueRepository _tagsValueRepository;
         /// <summary>
         /// Store connection string
         /// </summary>
@@ -629,6 +756,6 @@ namespace Osm
         /// </summary>
         private string _pathFilePdb;
 
-        private const int COUNT_ROW = 150000;
+        private const int COUNT_ROW = 250000;
     }
 }

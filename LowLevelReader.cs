@@ -8,7 +8,7 @@ using ProtoBuf;
 using OSMPBF;
 using zlib;
 
-namespace Osm
+namespace OsmImportToSqlServer
 {
     public class LowLevelReader
     {

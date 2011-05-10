@@ -1,33 +1,49 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Linq;
-using System.Text;
 using System.Xml;
 using System.Xml.Linq;
 using System.IO;
 using System.XmlUtility;
+using Ninject;
+using OsmImportToSqlServer.OsmData;
 
-namespace Osm
+namespace OsmImportToSqlServer.Config
 {
     /// <summary>
     /// Class to work with the configuration import pdb to SQL Server
     /// </summary>
-    class OsmImportConfigurator
+    public sealed class OsmImportConfigurator
     {
+        public static void CreateNewInstance (string pathOsmFileConfig)
+        {
+            if (Instance == null)
+            {
+                Instance = new OsmImportConfigurator(pathOsmFileConfig);
+            }
+            else
+            {
+                throw new ActivationException("Instance of class OsmImportConfigurator created.");
+            }
+        }
+
+        public static OsmImportConfigurator Instance { get; private set; }
+
         #region Constructor
         /// <summary>
         /// Constructor OsmImportConfigurator
         /// </summary>
         /// <param name="pathOsmFileConfig">Path to the XML configuration file</param>
-        public OsmImportConfigurator(string pathOsmFileConfig)
+        OsmImportConfigurator(string pathOsmFileConfig)
         {
             if (File.Exists(pathOsmFileConfig))
             {
                 _osmConfig = XDocument.Load(pathOsmFileConfig);
+                
                 ProcessDatabaseSection(_osmConfig.Root.Element("database"));
                 ProcessTagsSection(_osmConfig.Root.Element("tags"));
                 ProcessGeoSection(_osmConfig.Root.Element("geo"));
+                ProcessRepositoriesSection(_osmConfig.Root.Element("repositories"));
             }
             else
             {
@@ -54,7 +70,7 @@ namespace Osm
             }
             else
             {
-                return TypeValueTag.Hash;
+                return TypeValueTag.Id;
             }
 
         }
@@ -198,6 +214,12 @@ namespace Osm
                 }
             }
         }
+
+        private void ProcessRepositoriesSection(XElement repositoriesSection)
+        {
+            this.RepositoriesConfig = new RepositoriesConfig(repositoriesSection);
+        }
+
         #endregion
 
         #region Properties
@@ -205,6 +227,8 @@ namespace Osm
         /// Stores the configuration database
         /// </summary>
         public DatabaseConfig DataBaseConfig { get; set; }
+
+        public RepositoriesConfig RepositoriesConfig { get; set; }
         #endregion
 
         #region Private Fields
@@ -225,168 +249,5 @@ namespace Osm
         /// </summary>
         private XDocument _osmConfig;
         #endregion
-    }
-
-
-    /// <summary>
-    /// Lists the types of tag values ​​OSM
-    /// </summary>
-    public enum TypeValueTag
-    {
-        /// <summary>
-        /// Tag value will be loaded hash (INT)
-        /// </summary>
-        Hash,
-        /// <summary>
-        /// Tag value will be loaded VARCHAR
-        /// </summary>
-        String,
-        /// <summary>
-        /// Tag value will be loaded INT
-        /// </summary>
-        Int,
-        /// <summary>
-        /// Tag value will be loaded BIT
-        /// </summary>
-        Bit,
-        /// <summary>
-        /// The tag is not loaded into the database
-        /// </summary>
-        NoImport
-    }
-
-    /// <summary>
-    /// List the types geography Sql Server according to the OGC
-    /// </summary>
-    public enum GeoTypeOGC
-    {
-        Point,
-        MultiPoint,
-        LineString,
-        MultiLineString,
-        Polygon,
-        MultiPolygon,
-        GeometryCollection
-    }
-
-    /// <summary>
-    /// The class that maps the configuration file in section 'database'
-    /// </summary>
-    public class DatabaseConfig
-    {
-        public string ConnectionStringName { get; set; }
-        public string TableNameGeo { get; set; }
-        public string TableNameValues { get; set; }
-    }
-
-    /// <summary>
-    /// Class that handles and stores the settings section 'geo' of transforming objects into geography
-    /// </summary>
-    public class GeoTypeConfig
-    {
-        public GeoTypeConfig(XElement xGeo)
-        {
-            if (XmlUtility.IsExistElementsInXElement(xGeo))
-            {
-                this.InitializePrivateField();
-                foreach (XElement xGeoOsm in xGeo.Elements())
-                {
-                    switch (xGeoOsm.Name.ToString())
-                    {
-                        case "nodes":
-                            this.ProcessSectionGeoTypeOsm(xGeoOsm, _nodes);
-                            break;
-                        case "ways":
-                            this.ProcessSectionGeoTypeOsm(xGeoOsm, _ways);
-                            break;
-                        case "relations":
-                            this.ProcessSectionGeoTypeOsm(xGeoOsm, _relations);
-                            break;
-                    }
-                }
-            }
-            else
-            {
-                throw new XmlException(@"Element osm/geo not found or does not contain elements");
-            }
-        }
-
-        private void InitializePrivateField()
-        {
-            _nodes = new Dictionary<int, GeoTypeOGC>();
-            _ways = new Dictionary<int, GeoTypeOGC>();
-            _relations = new Dictionary<int, GeoTypeOGC>();
-        }
-
-        private void ProcessSectionGeoTypeOsm(XElement xGeoOsm, Dictionary<int, GeoTypeOGC> geoOsm)
-        {
-            if (XmlUtility.IsExistAttributesInXElement(xGeoOsm))
-            {
-                foreach (XElement xTags in xGeoOsm.Elements())
-                {
-                    if (xTags.Attribute("geography") != null)
-                    {
-                        GeoTypeOGC geoTypeOgc = this.GetTypeOGCFromSectionGeo(xTags.Attribute("geography").Value);
-                        geoOsm.Add(OsmImportUtilites.GetHash(xTags.Name.ToString()), geoTypeOgc);
-                    }
-                    else
-                    {
-                        throw new XmlException("A tag " + xGeoOsm.Name.ToString() +
-                            @"/" + xTags.Name.ToString() + " attribute 'geography' is not found");
-                    }
-                }
-            }
-        }
-
-        private GeoTypeOGC GetTypeOGCFromSectionGeo(string geography)
-        {
-            switch (geography)
-            {
-                case "POINT":
-                    return GeoTypeOGC.Point;
-                case "MULTIPOINT":
-                    return GeoTypeOGC.MultiPoint;
-                case "LINESTRING":
-                    return GeoTypeOGC.LineString;
-                case "MULTILINESTRING":
-                    return GeoTypeOGC.MultiLineString;
-                case "POLYGON":
-                    return GeoTypeOGC.Polygon;
-                case "MULTIPOLYGON":
-                    return GeoTypeOGC.MultiPolygon;
-                default:
-                    throw new XmlException("Geography type '" + geography + "' unknown");
-            }
-        }
-
-        public GeoType GetGeoTypeTagWay(int hashTag)
-        {
-            GeoTypeOGC geoTypeOgc;
-            if (_ways.TryGetValue(hashTag, out geoTypeOgc))
-            {
-                return new GeoType(geoTypeOgc);
-            }
-            else
-            {
-                return null;
-            }
-        }
-
-        public GeoType GetGeoTypeTagRealtion(int hashTag)
-        {
-            GeoTypeOGC geoTypeOgc;
-            if (_relations.TryGetValue(hashTag, out geoTypeOgc))
-            {
-                return new GeoType(geoTypeOgc);
-            }
-            else
-            {
-                return null;
-            }
-        }
-
-        private Dictionary<int, GeoTypeOGC> _nodes;
-        private Dictionary<int, GeoTypeOGC> _ways;
-        private Dictionary<int, GeoTypeOGC> _relations;
     }
 }

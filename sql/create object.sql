@@ -1,12 +1,20 @@
-﻿DBCC SHRINKFILE(osmarser_log, 2)
+﻿USE osmarser;
+
 DROP TABLE dbo.Geo
 DROP TABLE dbo.TagsValues
 DROP TABLE dbo.TagsValuesTrans
 DROP TABLE dbo.Nodes
 DROP TABLE dbo.Ways
 DROP TABLE dbo.Relations
--- Script creates the tables needed to store geographic features and tag values
+DROP TABLE dbo.MemberRole
 
+ALTER DATABASE osmarser SET RECOVERY SIMPLE;
+GO
+DBCC SHRINKFILE(osmarser_log, 3)
+DBCC SHRINKDATABASE(osmarser)
+ALTER DATABASE osmarser SET RECOVERY FULL;
+GO
+-- Script creates the tables needed to store geographic features and tag values
 -- Create tables to store data in a geographical form
 CREATE TABLE dbo.Geo
 (
@@ -28,11 +36,13 @@ vInt int
 )
 CREATE TABLE dbo.TagsValuesTrans
 (
-entity int,
-osm varchar(max),
-ru nvarchar(max),
-be nvarchar(max),
-en nvarchar(max),
+id int IDENTITY(1,1) PRIMARY KEY,
+tagHash int,
+valueHash int,
+LCID smallint,
+typeTrans tinyint,
+tagTrans varchar(max),
+valTrans varchar(max),
 main bit
 )
 
@@ -59,15 +69,8 @@ memberRole int,
 times datetime
 )
 
--- Deletes tables
-/*
-DROP TABLE dbo.Geo
-DROP TABLE dbo.TagsValues
-DROP TABLE dbo.TagsValuesTrans
-DROP TABLE dbo.Nodes
-DROP TABLE dbo.Ways
-DROP TABLE dbo.Relations
-*/
-
--- Service log file
--- DBCC SHRINKFILE(osmarser_log, 2)
+CREATE TABLE dbo.MemberRole
+(
+id int,
+memberRole varchar(max)
+)

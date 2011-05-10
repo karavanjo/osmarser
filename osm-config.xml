@@ -9,9 +9,17 @@
 		</tables>
 	</database>
 
+	<!-- Configures repositories -->
+	<repositories>
+		<RelationRolesRepository connString="osmarserDB"
+								 typeRepository="OsmImportToSqlServer.Repositories.SqlClient.SqlRelationsRolesRepository"/>
+		<TagsValueRepository connString="osmarserDB" 
+							 typeRepository="OsmImportToSqlServer.Repositories.SqlClient.SqlTagsRepository"/>
+	</repositories>
+	
 	<!-- Configures import object on the basis of the presence or absence of tags in database SQL Server -->
 	<tags>
-		<import>		
+		<import>			
 			<string>
 				<t contain="name:"/>
 				<t contain="_name"/>
@@ -96,6 +104,10 @@
 			<t tag="building" geography="POLYGON"/>
 		</ways>
 		<relations>
+			<address />
+			<border>
+				
+			</border>
 		</relations>
 	</geo>
 </osm>

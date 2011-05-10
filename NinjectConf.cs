@@ -5,7 +5,7 @@ using System.Text;
 using Ninject;
 using Ninject.Modules;
 
-namespace Osm
+namespace OsmImportToSqlServer
 {
     public static class Ninject
     {

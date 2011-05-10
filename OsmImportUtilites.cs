@@ -6,10 +6,9 @@ using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using OsmImportToSqlServer.Utilites;
 
-using Osm.Utilites;
-
-namespace Osm
+namespace OsmImportToSqlServer
 {
     public class OsmImportUtilites
     {
@@ -216,6 +215,9 @@ namespace Osm
                     break;
                 case TypeDataTable.DateTime:
                     return Type.GetType("System.DateTime");
+                case TypeDataTable.Byte:
+                    return Type.GetType("System.Byte");
+                    break;
             }
 
             throw new TypeLoadException("Type " + typeDataTable + " not supported");
@@ -239,6 +241,7 @@ namespace Osm
         Int64,
         Double,
         String,
-        DateTime
+        DateTime,
+        Byte
     }
 }

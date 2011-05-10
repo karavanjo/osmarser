@@ -6,6 +6,8 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Xml;
+using OsmImportToSqlServer;
+using OsmImportToSqlServer.OsmData;
 
 namespace Osm
 {

@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Linq;
-using System.Text;
+using OsmImportToSqlServer.Config;
 
-namespace Osm
+namespace OsmImportToSqlServer.OsmData
 {
     public struct Point
     {
@@ -98,6 +97,12 @@ namespace Osm
 
         private List<Node> _nodes;
     }
+
+    public class Relation : OsmPrimitive
+    {
+        
+    }
+    
 
     /// <summary>
     /// Class class describes the settings for importing geography object

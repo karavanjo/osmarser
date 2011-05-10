@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 
-namespace Osm.Utilites
+namespace OsmImportToSqlServer.Utilites
 {
     public class Scheduler
     {

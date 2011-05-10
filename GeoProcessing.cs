@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Microsoft.SqlServer.Types;
+using OsmImportToSqlServer.Config;
+using OsmImportToSqlServer.OsmData;
 
-namespace Osm
+namespace OsmImportToSqlServer
 {
     public class GeoProcessing
     {
