@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using OsmImportToSqlServer.Config;
 using OsmImportToSqlServer.OsmData;
+using OsmImportToSqlServer.OsmData.Tags;
 
 namespace OsmImportToSqlServer.Repositories
 {
@@ -34,6 +35,8 @@ namespace OsmImportToSqlServer.Repositories
             if (_keys.TryGetValue(keyString, out key)) return;
             key = new Key
                       {
+                          Id = 0,
+                          Name = keyString,
                           TypeValue = OsmImportConfigurator.Instance.GetTypeValueTag(keyString)
                       };
             if (key.TypeValue == TypeValueTag.NoImport) return;
@@ -42,11 +45,14 @@ namespace OsmImportToSqlServer.Repositories
             _freeIndexTag++;
         }
 
-        public void AddValue(string value, out int idValue)
+        public void AddValue(string valueString, out Value value)
         {
-            if (_values.TryGetValue(value, out idValue)) return;
-            idValue = _freeIndexValue;
-            _values.Add(value, idValue);
+            if (_values.TryGetValue(valueString, out value))
+            {
+                return;
+            }
+            value = new Value() { Id = _freeIndexValue, Name = valueString };
+            _values.Add(valueString, value);
             _freeIndexValue++;
         }
 
@@ -63,26 +69,30 @@ namespace OsmImportToSqlServer.Repositories
             }
             else
             {
-                this.AddValue(value, out idValue);
-                var tag = new TagId() { KeyId = _Key.Id, ValueId = idValue };
+                Value _Value;
+                this.AddValue(value, out _Value);
+                var tag = new Tag() { Key = _Key, Value = _Value };
                 if (!_tags.Contains(tag))
                 {
                     _tags.Add(tag);
                 }
                 typeValueTag = _Key.TypeValue;
                 idKey = _Key.Id;
+                idValue = _Value.Id;
             }
-
         }
 
-
+        public TagCompleteRowEnumerator GetEnumerator()
+        {
+            return new TagCompleteRowEnumerator(_tags);
+        }
 
         private int _freeIndexTag;
         private int _freeIndexValue;
 
         private readonly Dictionary<string, Key> _keys = new Dictionary<string, Key>();
-        private readonly Dictionary<string, int> _values = new Dictionary<string, int>();
-        private readonly HashSet<TagId> _tags = new HashSet<TagId>();
+        private readonly Dictionary<string, Value> _values = new Dictionary<string, Value>();
+        private readonly HashSet<Tag> _tags = new HashSet<Tag>();
 
         // Work for DB
         protected abstract void DownloadAllRolesDataFromDb();
@@ -125,55 +135,49 @@ namespace OsmImportToSqlServer.Repositories
         //    }
         //    return Int32.MinValue;
         //}
-
-        
     }
 
     public class TagCompleteRowEnumerator : IEnumerator<TagCompleteRow>
     {
         private int _currentIndex;
-        private HashSet<TagId>.Enumerator _enumeratorTags;
-
-        private Dictionary<string, Key> _keys;
-        private Dictionary<string, int> _values;
-        private HashSet<TagId> _tags;
+        private HashSet<Tag>.Enumerator _enumeratorTags;
+        private HashSet<Tag> _tags;
 
 
-        public TagCompleteRowEnumerator(Dictionary<string, Key> keys, 
-            Dictionary<string, int> values, 
-            HashSet<TagId> tags)
+        public TagCompleteRowEnumerator(HashSet<Tag> tags)
         {
-            this._keys = keys;
-            this._values = values;
             this._tags = tags;
             this._enumeratorTags = tags.GetEnumerator();
         }
 
         public TagCompleteRow Current
         {
-            get
-            {
-                throw new NotImplementedException();
-            }
+            get { return this.ConstructTagCompleteRow(); }
         }
 
-        //public TagCompleteRow ConstructTagCompleteRow()
-        //{
-        //    TagCompleteRow tagCompleteRow = new TagCompleteRow();
-        //    tagCompleteRow.KeyId = this._enumeratorTags.Current.KeyId;
-        //    tagCompleteRow.ValueId = this._enumeratorTags.Current.ValueId;
-        //    //tagCompleteRow.Key = _keys.Values
-        //}
+        public TagCompleteRow ConstructTagCompleteRow()
+        {
+            if (this.Current != null)
+            {
+                TagCompleteRow tagCompleteRow = new TagCompleteRow();
+                tagCompleteRow.KeyId = this._enumeratorTags.Current.Key.Id;
+                tagCompleteRow.KeyName = this._enumeratorTags.Current.Key.Name;
+                tagCompleteRow.ValueId = this._enumeratorTags.Current.Value.Id;
+                tagCompleteRow.ValueName = this._enumeratorTags.Current.Value.Name;
+                tagCompleteRow.TypeValue = this._enumeratorTags.Current.Key.TypeValue;
+                return tagCompleteRow;
+            }
+            else
+            {
+                throw new NullReferenceException("Property 'Current' in enumerator TagCompleteRowEnumerator is null.");
+            }
+        }
 
         void IDisposable.Dispose() { }
 
         object System.Collections.IEnumerator.Current
         {
-            get
-            {
-
-                throw new NotImplementedException();
-            }
+            get { return this.Current; }
         }
 
         public bool MoveNext()
@@ -189,8 +193,8 @@ namespace OsmImportToSqlServer.Repositories
 
     public class TagCompleteRow
     {
-        public string Key { get; set; }
-        public string Value { get; set; }
+        public string KeyName { get; set; }
+        public string ValueName { get; set; }
         public int KeyId { get; set; }
         public int ValueId { get; set; }
         public TypeValueTag TypeValue { get; set; }
