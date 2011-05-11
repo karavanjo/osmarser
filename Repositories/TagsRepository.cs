@@ -70,7 +70,14 @@ namespace OsmImportToSqlServer.Repositories
             else
             {
                 Value _Value;
-                this.AddValue(value, out _Value);
+                if (typeValueTag == TypeValueTag.Id)
+                {
+                    this.AddValue(value, out _Value);
+                }
+                else
+                {
+                    _Value = new Value();
+                }
                 var tag = new Tag() { Key = _Key, Value = _Value };
                 if (!_tags.Contains(tag))
                 {
@@ -139,10 +146,9 @@ namespace OsmImportToSqlServer.Repositories
 
     public class TagCompleteRowEnumerator : IEnumerator<TagCompleteRow>
     {
-        private int _currentIndex;
+        // private int _currentIndex;
         private HashSet<Tag>.Enumerator _enumeratorTags;
         private HashSet<Tag> _tags;
-
 
         public TagCompleteRowEnumerator(HashSet<Tag> tags)
         {
@@ -157,14 +163,16 @@ namespace OsmImportToSqlServer.Repositories
 
         public TagCompleteRow ConstructTagCompleteRow()
         {
-            if (this.Current != null)
+            if (this._enumeratorTags.Current != null)
             {
-                TagCompleteRow tagCompleteRow = new TagCompleteRow();
-                tagCompleteRow.KeyId = this._enumeratorTags.Current.Key.Id;
-                tagCompleteRow.KeyName = this._enumeratorTags.Current.Key.Name;
-                tagCompleteRow.ValueId = this._enumeratorTags.Current.Value.Id;
-                tagCompleteRow.ValueName = this._enumeratorTags.Current.Value.Name;
-                tagCompleteRow.TypeValue = this._enumeratorTags.Current.Key.TypeValue;
+                var tagCompleteRow = new TagCompleteRow
+                                         {
+                                             KeyId = this._enumeratorTags.Current.Key.Id,
+                                             KeyName = this._enumeratorTags.Current.Key.Name,
+                                             ValueId = this._enumeratorTags.Current.Value.Id,
+                                             ValueName = this._enumeratorTags.Current.Value.Name,
+                                             TypeValue = this._enumeratorTags.Current.Key.TypeValue
+                                         };
                 return tagCompleteRow;
             }
             else

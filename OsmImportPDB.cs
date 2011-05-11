@@ -49,8 +49,10 @@ namespace OsmImportToSqlServer
             _importConfigurator = osmImportConfigurator;
             this.InitializeImporter();
             ReadFile();
+            this.ImportTagsTranslate(OsmRepository.TagsRepository);
             this.ImportOsmPrimitiveToDb();
             this.ImportGeo();
+
         }
 
         private void InitializeImporter()
@@ -114,7 +116,7 @@ namespace OsmImportToSqlServer
                 }
                 if (_tagsValues.Rows.Count > 0) this.ImportDataTableInDb(ref _tagsValues, new GetTable(GetTableTagsValue));
 
-                if (_tagsValuesTrans.Rows.Count > 0) this.ImportDataTableInDb(ref _tagsValuesTrans, new GetTable(GetTableTagsValuesTrans));
+                //if (_tagsValuesTrans.Rows.Count > 0) this.ImportDataTableInDb(ref _tagsValuesTrans, new GetTable(GetTableTagsValuesTrans));
             }
         }
 
@@ -226,9 +228,9 @@ namespace OsmImportToSqlServer
                             //bool isValueHash;
                             //if (!_tagsValuesHash.TryGetValue(tagValue, out isValueHash))
                             //{
-                                //isValueHash = typeValueTag == TypeValueTag.Id;
-                                //_tagsValuesHash.Add(tagValue, isValueHash);
-                                //this.InsertTagsValueTrans(idKey, idValue, typeValueTag, key, val);
+                            //isValueHash = typeValueTag == TypeValueTag.Id;
+                            //_tagsValuesHash.Add(tagValue, isValueHash);
+                            //this.InsertTagsValueTrans(idKey, idValue, typeValueTag, key, val);
                             //}
 
                             IsImportToDb = true;
@@ -380,7 +382,7 @@ namespace OsmImportToSqlServer
         {
             for (int r = 0; r < relations.Count; r++)
             {
-                
+
             }
         }
 
@@ -475,14 +477,14 @@ namespace OsmImportToSqlServer
         //    }
         //}
 
-        private void InsertTagsValueTrans(int idKey, int idValue, TypeValueTag typeValueTag, 
+        private void InsertTagsValueTrans(int idKey, int idValue, TypeValueTag typeValueTag,
             string key, string value)
         {
             if (_tagsValuesTrans == null)
                 _tagsValuesTrans = this.GetTableTagsValuesTrans();
             DataRow row = _tagsValuesTrans.NewRow();
             row["tagHash"] = idKey;
-            if (typeValueTag==TypeValueTag.Id)
+            if (typeValueTag == TypeValueTag.Id)
             {
                 row["typeTrans"] = TagValueTransType.TagAndValue;
                 row["valueHash"] = idValue;
@@ -517,9 +519,42 @@ namespace OsmImportToSqlServer
             return constructDataTable.GetDataTable();
         }
 
+        private void ImportTagsTranslate(TagsRepository tagsRepository)
+        {
+            using (var connection = new SqlConnection(OsmImportConfigurator.Instance.DataBaseConfig.ConnectionString))
+            {
+                var cmd = connection.CreateCommand();
+                cmd.CommandText =
+                  "INSERT INTO TagsValuesTrans (" +
+                  " tagHash, valueHash, LCID,typeTrans,tagTrans,valTrans  " +
+                  ") VALUES (" +
+                  "  @idKey, @idValue, -1, @type, @key, @val" +
+                  ")";
+
+                cmd.Parameters.Add("@idKey", SqlDbType.Int);
+                cmd.Parameters.Add("@idValue", SqlDbType.Int);
+                cmd.Parameters.Add("@type", SqlDbType.SmallInt);
+                cmd.Parameters.Add("@key", SqlDbType.VarChar);
+                cmd.Parameters.Add("@val", SqlDbType.VarChar);
+                connection.Open();
+                TagCompleteRowEnumerator enumerator = tagsRepository.GetEnumerator();
+                while (enumerator.MoveNext())
+                {
+                    TagCompleteRow tagCompleteRow = enumerator.Current;
+                    cmd.Parameters["@idKey"].Value = tagCompleteRow.KeyId;
+                    cmd.Parameters["@idValue"].Value = tagCompleteRow.ValueId;
+                    cmd.Parameters["@type"].Value = tagCompleteRow.TypeValue;
+                    cmd.Parameters["@key"].Value = tagCompleteRow.KeyName;
+                    cmd.Parameters["@val"].Value = tagCompleteRow.ValueName;
+                    cmd.ExecuteNonQuery();
+                }
+            }
+        }
+
+
         private void InsertTags()
         {
-            
+
         }
 
         /// <summary>
