@@ -276,11 +276,11 @@ namespace OsmImportToSqlServer.Importers
                     stamp = this.timeEpoche.AddSeconds(second);
                 }
                 long deltaref = 0;
-                WaySimple way = new WaySimple() { Id = osmpbfWay.id, Date = stamp };
+                var way = new WaySimple(osmpbfWay.id, stamp);
                 for (int nodeRef = 0; nodeRef < osmpbfWay.refs.Count; nodeRef++)
                 {
                     deltaref += osmpbfWay.refs[nodeRef];
-                    way.Nodes.Add(deltaref);
+                    way.Nodes.Add(this.AddNodeSimpleToNodesRefs(deltaref));
                 }
 
                 IsImportToDb = false;
@@ -303,22 +303,22 @@ namespace OsmImportToSqlServer.Importers
                             this.InsertTagsAndValue(way.Id, idKey, idValue, val, typeValueTag);
                             if (_importConfigurator.GetTypeOGC(Type.GetType("OsmImportToSqlServer.OsmData.Way"), 
                                 key, out geoType))
-                                way.TypeGeo = geoType;
+                                way.GeoType = geoType;
                         }
                     }
                 }
-
+                
                 //// DEBUG
                 //Console.WriteLine(DateTime.Now + " Way - " + way.Id + ", " + way.Nodes.Count + " nodes");
                 if (IsImportToDb)
                 {
-                    if (way.TypeGeo != null)
+                    if (way.GeoType != null)
                     {
                         this.AddWay(way);
                     }
                     else
                     {
-                        way.TypeGeo = this.WayIsPolygonOrLine(way);
+                        way.GeoType = this.WayIsPolygonOrLine(way);
                         this.AddWay(way);
                     }
                 }
