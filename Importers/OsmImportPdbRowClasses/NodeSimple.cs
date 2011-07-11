@@ -14,6 +14,8 @@ namespace OsmImportToSqlServer.Importers.OsmImportPdbRowClasses
             this._id = id;
         }
 
+        public Int64 Id { get { return _id; } }
+
         public double Latitude { get; set; }
         public double Longtitude { get; set; }
     }
