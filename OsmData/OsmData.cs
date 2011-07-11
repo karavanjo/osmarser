@@ -42,6 +42,11 @@ namespace OsmImportToSqlServer.OsmData
             base._dateStamp = dateTime;
         }
 
+        public Node(Int64 id)
+        {
+            base._id = id;
+        }
+
         public void GetLatLon(out double lat, out double lon)
         {
             lat = _point.Lat;
