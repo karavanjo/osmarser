@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Ninject;
+﻿using Ninject;
 using Ninject.Modules;
+using OsmImportToSqlServer.Helpers.Log;
 
-namespace OsmImportToSqlServer
+namespace OsmImportToSqlServer.Config.Ninject
 {
     public static class Ninject
     {

@@ -8,7 +8,7 @@
 //------------------------------------------------------------------------------
 
 // Generated from: osm.proto
-namespace OSMPBF
+namespace OsmImportToSqlServer.Helpers.ReadPdb
 {
     [global::System.Serializable, global::ProtoBuf.ProtoContract(Name = @"Blob")]
     public partial class Blob : global::ProtoBuf.IExtensible
@@ -104,10 +104,10 @@ namespace OSMPBF
         public HeaderBlock() { }
 
 
-        private OSMPBF.HeaderBBox _bbox = null;
+        private HeaderBBox _bbox = null;
         [global::ProtoBuf.ProtoMember(1, IsRequired = false, Name = @"bbox", DataFormat = global::ProtoBuf.DataFormat.Default)]
         [global::System.ComponentModel.DefaultValue(null)]
-        public OSMPBF.HeaderBBox bbox
+        public HeaderBBox bbox
         {
             get { return _bbox; }
             set { _bbox = value; }
@@ -192,16 +192,16 @@ namespace OSMPBF
     {
         public PrimitiveBlock() { }
 
-        private OSMPBF.StringTable _stringtable;
+        private StringTable _stringtable;
         [global::ProtoBuf.ProtoMember(1, IsRequired = true, Name = @"stringtable", DataFormat = global::ProtoBuf.DataFormat.Default)]
-        public OSMPBF.StringTable stringtable
+        public StringTable stringtable
         {
             get { return _stringtable; }
             set { _stringtable = value; }
         }
-        private readonly global::System.Collections.Generic.List<OSMPBF.PrimitiveGroup> _primitivegroup = new global::System.Collections.Generic.List<OSMPBF.PrimitiveGroup>();
+        private readonly global::System.Collections.Generic.List<PrimitiveGroup> _primitivegroup = new global::System.Collections.Generic.List<PrimitiveGroup>();
         [global::ProtoBuf.ProtoMember(2, Name = @"primitivegroup", DataFormat = global::ProtoBuf.DataFormat.Default)]
-        public global::System.Collections.Generic.List<OSMPBF.PrimitiveGroup> primitivegroup
+        public global::System.Collections.Generic.List<PrimitiveGroup> primitivegroup
         {
             get { return _primitivegroup; }
         }
@@ -252,39 +252,39 @@ namespace OSMPBF
     {
         public PrimitiveGroup() { }
 
-        private readonly global::System.Collections.Generic.List<OSMPBF.Node> _nodes = new global::System.Collections.Generic.List<OSMPBF.Node>();
+        private readonly global::System.Collections.Generic.List<Node> _nodes = new global::System.Collections.Generic.List<Node>();
         [global::ProtoBuf.ProtoMember(1, Name = @"nodes", DataFormat = global::ProtoBuf.DataFormat.Default)]
-        public global::System.Collections.Generic.List<OSMPBF.Node> nodes
+        public global::System.Collections.Generic.List<Node> nodes
         {
             get { return _nodes; }
         }
 
 
-        private OSMPBF.DenseNodes _dense = null;
+        private DenseNodes _dense = null;
         [global::ProtoBuf.ProtoMember(2, IsRequired = false, Name = @"dense", DataFormat = global::ProtoBuf.DataFormat.Default)]
         [global::System.ComponentModel.DefaultValue(null)]
-        public OSMPBF.DenseNodes dense
+        public DenseNodes dense
         {
             get { return _dense; }
             set { _dense = value; }
         }
-        private readonly global::System.Collections.Generic.List<OSMPBF.Way> _ways = new global::System.Collections.Generic.List<OSMPBF.Way>();
+        private readonly global::System.Collections.Generic.List<Way> _ways = new global::System.Collections.Generic.List<Way>();
         [global::ProtoBuf.ProtoMember(3, Name = @"ways", DataFormat = global::ProtoBuf.DataFormat.Default)]
-        public global::System.Collections.Generic.List<OSMPBF.Way> ways
+        public global::System.Collections.Generic.List<Way> ways
         {
             get { return _ways; }
         }
 
-        private readonly global::System.Collections.Generic.List<OSMPBF.Relation> _relations = new global::System.Collections.Generic.List<OSMPBF.Relation>();
+        private readonly global::System.Collections.Generic.List<Relation> _relations = new global::System.Collections.Generic.List<Relation>();
         [global::ProtoBuf.ProtoMember(4, Name = @"relations", DataFormat = global::ProtoBuf.DataFormat.Default)]
-        public global::System.Collections.Generic.List<OSMPBF.Relation> relations
+        public global::System.Collections.Generic.List<Relation> relations
         {
             get { return _relations; }
         }
 
-        private readonly global::System.Collections.Generic.List<OSMPBF.ChangeSet> _changesets = new global::System.Collections.Generic.List<OSMPBF.ChangeSet>();
+        private readonly global::System.Collections.Generic.List<ChangeSet> _changesets = new global::System.Collections.Generic.List<ChangeSet>();
         [global::ProtoBuf.ProtoMember(5, Name = @"changesets", DataFormat = global::ProtoBuf.DataFormat.Default)]
-        public global::System.Collections.Generic.List<OSMPBF.ChangeSet> changesets
+        public global::System.Collections.Generic.List<ChangeSet> changesets
         {
             get { return _changesets; }
         }
@@ -455,10 +455,10 @@ namespace OSMPBF
         }
 
 
-        private OSMPBF.Info _info = null;
+        private Info _info = null;
         [global::ProtoBuf.ProtoMember(4, IsRequired = false, Name = @"info", DataFormat = global::ProtoBuf.DataFormat.Default)]
         [global::System.ComponentModel.DefaultValue(null)]
-        public OSMPBF.Info info
+        public Info info
         {
             get { return _info; }
             set { _info = value; }
@@ -495,10 +495,10 @@ namespace OSMPBF
         }
 
 
-        private OSMPBF.DenseInfo _denseinfo = null;
+        private DenseInfo _denseinfo = null;
         [global::ProtoBuf.ProtoMember(5, IsRequired = false, Name = @"denseinfo", DataFormat = global::ProtoBuf.DataFormat.Default)]
         [global::System.ComponentModel.DefaultValue(null)]
-        public OSMPBF.DenseInfo denseinfo
+        public DenseInfo denseinfo
         {
             get { return _denseinfo; }
             set { _denseinfo = value; }
@@ -556,10 +556,10 @@ namespace OSMPBF
         }
 
 
-        private OSMPBF.Info _info = null;
+        private Info _info = null;
         [global::ProtoBuf.ProtoMember(4, IsRequired = false, Name = @"info", DataFormat = global::ProtoBuf.DataFormat.Default)]
         [global::System.ComponentModel.DefaultValue(null)]
-        public OSMPBF.Info info
+        public Info info
         {
             get { return _info; }
             set { _info = value; }
@@ -603,10 +603,10 @@ namespace OSMPBF
         }
 
 
-        private OSMPBF.Info _info = null;
+        private Info _info = null;
         [global::ProtoBuf.ProtoMember(4, IsRequired = false, Name = @"info", DataFormat = global::ProtoBuf.DataFormat.Default)]
         [global::System.ComponentModel.DefaultValue(null)]
-        public OSMPBF.Info info
+        public Info info
         {
             get { return _info; }
             set { _info = value; }
@@ -625,9 +625,9 @@ namespace OSMPBF
             get { return _memids; }
         }
 
-        private readonly global::System.Collections.Generic.List<OSMPBF.Relation.MemberType> _types = new global::System.Collections.Generic.List<OSMPBF.Relation.MemberType>();
+        private readonly global::System.Collections.Generic.List<MemberType> _types = new global::System.Collections.Generic.List<MemberType>();
         [global::ProtoBuf.ProtoMember(10, Name = @"types", DataFormat = global::ProtoBuf.DataFormat.TwosComplement, Options = global::ProtoBuf.MemberSerializationOptions.Packed)]
-        public global::System.Collections.Generic.List<OSMPBF.Relation.MemberType> types
+        public global::System.Collections.Generic.List<MemberType> types
         {
             get { return _types; }
         }

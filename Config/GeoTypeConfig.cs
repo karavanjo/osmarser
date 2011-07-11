@@ -5,6 +5,8 @@ using System.Text;
 using System.Xml;
 using System.Xml.Linq;
 using System.XmlUtility;
+using OsmImportToSqlServer.Helpers;
+using OsmImportToSqlServer.Helpers.Import;
 using OsmImportToSqlServer.OsmData;
 
 namespace OsmImportToSqlServer.Config
@@ -43,12 +45,12 @@ namespace OsmImportToSqlServer.Config
 
         private void InitializePrivateField()
         {
-            _nodes = new Dictionary<int, GeoTypeOGC>();
-            _ways = new Dictionary<int, GeoTypeOGC>();
-            _relations = new Dictionary<int, GeoTypeOGC>();
+            _nodes = new Dictionary<string, GeoTypeOGC>();
+            _ways = new Dictionary<string, GeoTypeOGC>();
+            _relations = new Dictionary<string, GeoTypeOGC>();
         }
 
-        private void ProcessSectionGeoTypeOsm(XElement xGeoOsm, Dictionary<int, GeoTypeOGC> geoOsm)
+        private void ProcessSectionGeoTypeOsm(XElement xGeoOsm, Dictionary<string , GeoTypeOGC> geoOsm)
         {
             if (XmlUtility.IsExistAttributesInXElement(xGeoOsm))
             {
@@ -57,7 +59,7 @@ namespace OsmImportToSqlServer.Config
                     if (xTags.Attribute("geography") != null)
                     {
                         GeoTypeOGC geoTypeOgc = this.GetTypeOGCFromSectionGeo(xTags.Attribute("geography").Value);
-                        geoOsm.Add(OsmImportUtilites.GetHash(xTags.Name.ToString()), geoTypeOgc);
+                        geoOsm.Add(xTags.Name.ToString(), geoTypeOgc);
                     }
                     else
                     {
@@ -89,10 +91,10 @@ namespace OsmImportToSqlServer.Config
             }
         }
 
-        public GeoType GetGeoTypeTagWay(int hashTag)
+        public GeoType GetGeoTypeTagWay(string tag)
         {
             GeoTypeOGC geoTypeOgc;
-            if (_ways.TryGetValue(hashTag, out geoTypeOgc))
+            if (_ways.TryGetValue(tag, out geoTypeOgc))
             {
                 return new GeoType(geoTypeOgc);
             }
@@ -102,10 +104,10 @@ namespace OsmImportToSqlServer.Config
             }
         }
 
-        public GeoType GetGeoTypeTagRealtion(int hashTag)
+        public GeoType GetGeoTypeTagRealtion(string tag)
         {
             GeoTypeOGC geoTypeOgc;
-            if (_relations.TryGetValue(hashTag, out geoTypeOgc))
+            if (_relations.TryGetValue(tag, out geoTypeOgc))
             {
                 return new GeoType(geoTypeOgc);
             }
@@ -115,8 +117,8 @@ namespace OsmImportToSqlServer.Config
             }
         }
 
-        private Dictionary<int, GeoTypeOGC> _nodes;
-        private Dictionary<int, GeoTypeOGC> _ways;
-        private Dictionary<int, GeoTypeOGC> _relations;
+        private Dictionary<string , GeoTypeOGC> _nodes;
+        private Dictionary<string, GeoTypeOGC> _ways;
+        private Dictionary<string, GeoTypeOGC> _relations;
     }
 }

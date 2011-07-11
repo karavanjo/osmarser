@@ -99,7 +99,7 @@ namespace OsmImportToSqlServer.Repositories
 
         private readonly Dictionary<string, Key> _keys = new Dictionary<string, Key>();
         private readonly Dictionary<string, Value> _values = new Dictionary<string, Value>();
-        private readonly HashSet<Tag> _tags = new HashSet<Tag>();
+        private readonly HashSet<Tag> _tags = new HashSet<Tag>(new TagComparer());
 
         // Work for DB
         protected abstract void DownloadAllRolesDataFromDb();
@@ -142,6 +142,21 @@ namespace OsmImportToSqlServer.Repositories
         //    }
         //    return Int32.MinValue;
         //}
+    }
+
+    class TagComparer : EqualityComparer<Tag>
+    {
+
+        public override bool Equals(Tag x, Tag y)
+        {
+            return x.Key.Id == y.Key.Id && x.Value.Id == y.Value.Id;
+        }
+
+        public override int GetHashCode(Tag tag)
+        {
+            return tag.Value.Name == null ? tag.Key.Name.GetHashCode() : (tag.Key.Name + tag.Value.Name).GetHashCode();
+            //throw new NotImplementedException();
+        }
     }
 
     public class TagCompleteRowEnumerator : IEnumerator<TagCompleteRow>

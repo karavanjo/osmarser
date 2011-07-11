@@ -57,12 +57,15 @@ times datetime
 CREATE TABLE dbo.Ways
 (
 id bigint,
+orders smallint,
 idNode bigint,
+typeGeo tinyint,
 times datetime
 )
 CREATE TABLE dbo.Relations
 (
 id bigint,
+orders smallint,
 ref bigint,
 memberType bit,
 memberRole int,
@@ -74,3 +77,6 @@ CREATE TABLE dbo.MemberRole
 id int,
 memberRole varchar(max)
 )
+
+-- IF EXISTS(SELECT 1 FROM sys.objects WHERE OBJECT_ID = OBJECT_ID(N'nodeRefsWay') AND type = (N'U'))
+-- CREATE TYPE [dbo].[nodeRefsWay] AS TABLE(nodesId bigint, wayId bigint, orders int)

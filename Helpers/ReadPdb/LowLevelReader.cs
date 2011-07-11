@@ -1,14 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using Osm;
-using ProtoBuf;
-using OSMPBF;
 using zlib;
 
-namespace OsmImportToSqlServer
+namespace OsmImportToSqlServer.Helpers.ReadPdb
 {
     public class LowLevelReader
     {

@@ -6,6 +6,8 @@ using System.Xml.Linq;
 using System.IO;
 using System.XmlUtility;
 using Ninject;
+using OsmImportToSqlServer.Helpers;
+using OsmImportToSqlServer.Helpers.Import;
 using OsmImportToSqlServer.OsmData;
 
 namespace OsmImportToSqlServer.Config
@@ -82,16 +84,17 @@ namespace OsmImportToSqlServer.Config
         /// <param name="hashTag">Tag hash</param>
         /// <param name="geoType">Out geoType if rule tag if there or NULL is not</param>
         /// <returns>True if exist rul tag</returns>
-        public bool GetTypeOGC(OsmPrimitiveType osmPrimitiveType, int hashTag, out GeoType geoType)
+        public bool GetTypeOGC(Type osmPrimitiveType, string tag, out GeoType geoType)
         {
-            switch (osmPrimitiveType)
+            if (osmPrimitiveType is Way)
             {
-                case OsmPrimitiveType.Way:
-                    geoType = this._geoConfig.GetGeoTypeTagWay(hashTag);
-                    return true;
-                case OsmPrimitiveType.Relation:
-                    geoType = this._geoConfig.GetGeoTypeTagRealtion(hashTag);
-                    return true;
+                geoType = this._geoConfig.GetGeoTypeTagWay(tag);
+                return true;
+            }
+            if (osmPrimitiveType is Relation)
+            {
+                geoType = this._geoConfig.GetGeoTypeTagRealtion(tag);
+                return true;
             }
             geoType = null;
             return false;
