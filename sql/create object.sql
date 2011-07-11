@@ -3,14 +3,15 @@
 DROP TABLE dbo.Geo
 DROP TABLE dbo.TagsValues
 DROP TABLE dbo.TagsValuesTrans
-DROP TABLE dbo.Nodes
+DROP TABLE dbo.WaysRefs
 DROP TABLE dbo.Ways
 DROP TABLE dbo.Relations
-DROP TABLE dbo.MemberRole
+DROP TABLE dbo.MemberRoles
+DROP TABLE dbo.Nodes
 
 ALTER DATABASE osmarser SET RECOVERY SIMPLE;
 GO
-DBCC SHRINKFILE(osmarser_log, 3)
+DBCC SHRINKFILE(osmarser_log)
 DBCC SHRINKDATABASE(osmarser)
 ALTER DATABASE osmarser SET RECOVERY FULL;
 GO
@@ -34,6 +35,7 @@ vHash int,
 vString nvarchar(max),
 vInt int
 )
+
 CREATE TABLE dbo.TagsValuesTrans
 (
 id int IDENTITY(1,1) PRIMARY KEY,
@@ -49,34 +51,43 @@ main bit
 -- Create tables to store data in a structured form osm
 CREATE TABLE dbo.Nodes
 (
-id bigint,
+id bigint PRIMARY KEY,
 lat float(24),
 lon float(24),
 times datetime
 )
+
 CREATE TABLE dbo.Ways
 (
-id bigint,
-orders smallint,
-idNode bigint,
+id bigint PRIMARY KEY,
 typeGeo tinyint,
 times datetime
 )
+
+CREATE TABLE dbo.WaysRefs
+(
+idWay bigint REFERENCES Ways(id),
+idNode bigint REFERENCES Nodes(id),
+orders int
+)
+
+CREATE TABLE dbo.MemberRoles
+(
+id int PRIMARY KEY,
+memberRole varchar(max)
+)
+
 CREATE TABLE dbo.Relations
 (
-id bigint,
+id bigint PRIMARY KEY,
 orders smallint,
 ref bigint,
 memberType bit,
-memberRole int,
+memberRole int REFERENCES dbo.MemberRoles(id),
 times datetime
 )
 
-CREATE TABLE dbo.MemberRole
-(
-id int,
-memberRole varchar(max)
-)
+
 
 -- IF EXISTS(SELECT 1 FROM sys.objects WHERE OBJECT_ID = OBJECT_ID(N'nodeRefsWay') AND type = (N'U'))
 -- CREATE TYPE [dbo].[nodeRefsWay] AS TABLE(nodesId bigint, wayId bigint, orders int)
