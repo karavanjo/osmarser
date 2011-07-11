@@ -8,9 +8,8 @@ namespace OsmImportToSqlServer.Importers.OsmImportPdbRowClasses
 {
     public class WaySimple : OsmPrimitive
     {
-        public WaySimple(Int64 id, DateTime dateTime, List<NodeSimple> nodesSimple)
+        public WaySimple(Int64 id, DateTime dateTime)
         {
-            _nodesSimple = nodesSimple;
             base._id = id;
             this._nodesSimple = new List<NodeSimple>();
             base._dateStamp = dateTime;
