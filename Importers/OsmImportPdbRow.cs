@@ -9,6 +9,7 @@ using OsmImportToSqlServer.Config;
 using OsmImportToSqlServer.Helpers;
 using OsmImportToSqlServer.Helpers.Import;
 using OsmImportToSqlServer.Helpers.ReadPdb;
+using OsmImportToSqlServer.Importers.OsmImportPdbRowClasses;
 using OsmImportToSqlServer.OsmData;
 using OsmImportToSqlServer.Repositories;
 using ProtoBuf;
@@ -580,6 +581,11 @@ namespace OsmImportToSqlServer.Importers
         /// Stores nodes labeled as the storage of geography objects to the database
         /// </summary>
         private List<Node> _nodesOsm = new List<Node>();
+
+        /// <summary>
+        /// Stores nodesRefs
+        /// </summary>
+        private Dictionary<Int64, NodeSimple> _nodesRefs = new Dictionary<long, NodeSimple>();
         /// <summary>
         /// Stores ways labeled as the storage of geography objects to the database
         /// </summary>
