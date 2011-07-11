@@ -340,6 +340,26 @@ namespace OsmImportToSqlServer.Importers
         }
 
         /// <summary>
+        /// Added new NodeSimple in _nodesRefs and getting this
+        /// </summary>
+        /// <param name="idNodeInWay"></param>
+        /// <returns></returns>
+        private NodeSimple AddNodeSimpleToNodesRefs(Int64 idNodeInWay)
+        {
+            NodeSimple nodeSimple;
+            if (_nodesRefs.TryGetValue(idNodeInWay, out nodeSimple))
+            {
+                return nodeSimple;
+            }
+            else
+            {
+                nodeSimple = new NodeSimple(idNodeInWay);
+                _nodesRefs.Add(idNodeInWay, nodeSimple);
+                return nodeSimple;
+            }
+        }
+
+        /// <summary>
         /// Reads and parses a relations (OSMPBF.Relation)
         /// </summary>
         /// <param name="relations">An array of relations</param>
@@ -624,28 +644,28 @@ namespace OsmImportToSqlServer.Importers
         private const int COUNT_ROW = 250000;
     }
 
-    class WaySimple
-    {
-        public WaySimple()
-        {
-            this.Nodes = new List<long>();
-        }
+    //class WaySimple
+    //{
+    //    public WaySimple()
+    //    {
+    //        this.Nodes = new List<long>();
+    //    }
 
-        public Int64 Id { get; set; }
-        public DateTime Date { get; set; }
-        public GeoType TypeGeo { get; set; }
-        public List<Int64> Nodes { get; set; }
+    //    public Int64 Id { get; set; }
+    //    public DateTime Date { get; set; }
+    //    public GeoType TypeGeo { get; set; }
+    //    public List<Int64> Nodes { get; set; }
 
-        public bool IsPolygon()
-        {
-            if (Nodes[0] == Nodes[Nodes.Count - 1] && Nodes.Count > 1)
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-        }
-    }
+    //    public bool IsPolygon()
+    //    {
+    //        if (Nodes[0] == Nodes[Nodes.Count - 1] && Nodes.Count > 1)
+    //        {
+    //            return true;
+    //        }
+    //        else
+    //        {
+    //            return false;
+    //        }
+    //    }
+    //}
 }
