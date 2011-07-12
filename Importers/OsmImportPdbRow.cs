@@ -531,14 +531,10 @@ namespace OsmImportToSqlServer.Importers
             dataRow["idGeo"] = node.Id;
             dataRow["bin"] = GeoProcessing.GeoProcessingNode(node);
             dataRow["typeGeo"] = (byte)GeoTypeOGC.Point;
-            _geos.Rows.Add(dataRow);
-
-
-
-            if (_geos.Rows.Count == COUNT_ROW) this.ImportDataTableInDb(ref _geos, TablesTemplates.GetTableGeo);
+            this.AddRowsToGeoTable(dataRow);
         }
 
-        private void AddGeoToGeoTable(DataRow rowGeoTable)
+        private void AddRowsToGeoTable(DataRow rowGeoTable)
         {
             _geos.Rows.Add(rowGeoTable);
             if (_geos.Rows.Count > COUNT_ROW)
