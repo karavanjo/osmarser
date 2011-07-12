@@ -111,9 +111,15 @@ namespace OsmImportToSqlServer.Importers
                     }
                     blockCount++;
                 }
-                if (_tagsValues.Rows.Count > 0) this.ImportDataTableInDb(ref _tagsValues, new GetTable(GetTableTagsValue));
-
+                this.UploadRemainingOsmData();
             }
+        }
+
+        private void UploadRemainingOsmData()
+        {
+            if (_nodesOsm.Count > 0) ImportPrimitiveNodesToDb();
+            if (_waysOsm.Count > 0) ImportPrimitiveWaysToDb();
+            if (_tagsValues.Rows.Count > 0) this.ImportDataTableInDb(ref _tagsValues, new GetTable(GetTableTagsValue));
         }
 
         /// <summary>
@@ -276,6 +282,7 @@ namespace OsmImportToSqlServer.Importers
                     stamp = this.timeEpoche.AddSeconds(second);
                 }
                 long deltaref = 0;
+                
                 var way = new WaySimple(osmpbfWay.id, stamp);
                 for (int nodeRef = 0; nodeRef < osmpbfWay.refs.Count; nodeRef++)
                 {
@@ -301,13 +308,13 @@ namespace OsmImportToSqlServer.Importers
                         {
                             IsImportToDb = true;
                             this.InsertTagsAndValue(way.Id, idKey, idValue, val, typeValueTag);
-                            if (_importConfigurator.GetTypeOGC(Type.GetType("OsmImportToSqlServer.OsmData.Way"), 
+                            if (_importConfigurator.GetTypeOGC(Type.GetType("OsmImportToSqlServer.OsmData.Way"),
                                 key, out geoType))
                                 way.GeoType = geoType;
                         }
                     }
                 }
-                
+
                 //// DEBUG
                 //Console.WriteLine(DateTime.Now + " Way - " + way.Id + ", " + way.Nodes.Count + " nodes");
                 if (IsImportToDb)
@@ -321,6 +328,10 @@ namespace OsmImportToSqlServer.Importers
                         way.GeoType = this.WayIsPolygonOrLine(way);
                         this.AddWay(way);
                     }
+                }
+                else
+                {
+                    this.AddWay(way);
                 }
 
 
@@ -403,7 +414,9 @@ namespace OsmImportToSqlServer.Importers
                     }
                     else
                     {
-                        throw new NotImplementedException("Parsed value type Int FAILED!");
+                        row["vInt"] = -9999;
+                        row["vType"] = Convert.ToInt16(TypeValueTag.Int);
+                        //throw new NotImplementedException("Parsed value type Int FAILED!");
                     }
                     break;
                 case TypeValueTag.String:
@@ -482,24 +495,13 @@ namespace OsmImportToSqlServer.Importers
 
         private void AddNode(Node node)
         {
+            _nodesOsm.Add(node);
             if (_nodesOsm.Count == COUNT_ROW)
             {
                 ImportPrimitiveNodesToDb();
-                _nodesOsm.Clear();
             }
-            _nodesOsm.Add(node);
         }
 
-        private void AddWay(WaySimple way)
-        {
-            if (_waysOsm.Count == COUNT_ROW)
-            {
-                ImportPrimitiveWaysToDb();
-                _waysOsm.Clear();
-            }
-            _waysOsm.Add(way);
-        }
-        
         private DataTable _tableNodes = TablesTemplates.GetTableNodes();
         /// <summary>
         /// Imports Nodes in Sql Server
@@ -514,9 +516,10 @@ namespace OsmImportToSqlServer.Importers
                 rowNode["lon"] = _nodesOsm[i].Longtitude;
                 rowNode["times"] = _nodesOsm[i].DateStamp;
                 _tableNodes.Rows.Add(rowNode);
-                if (_nodesOsm[i].GeoType != null) ImportGeoNodesToDb(_nodesOsm[i]);
+                //if (_nodesOsm[i].GeoType != null) ImportGeoNodesToDb(_nodesOsm[i]);
             }
             this.ImportDataTableInDb(ref _tableNodes, TablesTemplates.GetTableNodes);
+            _nodesOsm.Clear();
         }
 
         private DataTable _geos = TablesTemplates.GetTableGeo();
@@ -529,24 +532,35 @@ namespace OsmImportToSqlServer.Importers
             if (_geos.Rows.Count == COUNT_ROW) this.ImportDataTableInDb(ref _geos, TablesTemplates.GetTableGeo);
         }
 
+        private void AddWay(WaySimple way)
+        {
+            _waysOsm.Add(way);
+            if (_nodesRefs.Count > COUNT_ROW)
+            {
+                ImportPrimitiveWaysToDb();
+            }
+        }
+
         private DataTable _tableWays = TablesTemplates.GetTableWays();
         /// <summary>
         /// Imports Ways in Sql Server
         /// </summary>
         private void ImportPrimitiveWaysToDb()
         {
-            _tableWays = this.GetTableWays();
             for (int w = 0; w < _waysOsm.Count; w++)
             {
                 DataRow rowWay = _tableWays.NewRow();
                 rowWay["id"] = _waysOsm[w].Id;
-                if (_waysOsm[w].TypeGeo != null)
-                    rowWay["typeGeo"] = Convert.ToByte(_waysOsm[w].TypeGeo.GeoTypeOGC);
-                rowWay["times"] = _waysOsm[w].Date;
+                if (_waysOsm[w].GeoType != null)
+                    rowWay["typeGeo"] = Convert.ToByte(_waysOsm[w].GeoType.GeoTypeOGC);
+                rowWay["times"] = _waysOsm[w].DateStamp;
                 _tableWays.Rows.Add(rowWay);
                 ImportRefsWays(_waysOsm[w]);
             }
             this.ImportDataTableInDb(ref _tableWays, TablesTemplates.GetTableWays);
+            _waysOsm.Clear();
+            this.ImportDataTableInDb(ref _tableWaysRefs, TablesTemplates.GetTableWaysRefs);
+            _nodesRefs.Clear();
         }
 
         private DataTable _tableWaysRefs = TablesTemplates.GetTableWaysRefs();
@@ -561,12 +575,10 @@ namespace OsmImportToSqlServer.Importers
                 orderNode++;
                 DataRow rowWayRefs = _tableWaysRefs.NewRow();
                 rowWayRefs["idWay"] = waySimple.Id;
-                rowWayRefs["idNode"] = waySimple.Nodes[i];
+                rowWayRefs["idNode"] = waySimple.Nodes[i].Id;
                 rowWayRefs["orders"] = orderNode;
                 _tableWaysRefs.Rows.Add(rowWayRefs);
-
             }
-            if (_tableWaysRefs.Rows.Count > COUNT_ROW) this.ImportDataTableInDb(ref _tableWaysRefs, TablesTemplates.GetTableWaysRefs);
         }
 
         /// <summary>
