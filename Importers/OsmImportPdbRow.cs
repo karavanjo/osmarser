@@ -511,12 +511,13 @@ namespace OsmImportToSqlServer.Importers
             for (int i = 0; i < _nodesOsm.Count; i++)
             {
                 DataRow rowNode = _tableNodes.NewRow();
-                rowNode["id"] = _nodesOsm[i].Id;
-                rowNode["lat"] = _nodesOsm[i].Latitude;
-                rowNode["lon"] = _nodesOsm[i].Longtitude;
-                rowNode["times"] = _nodesOsm[i].DateStamp;
+                Node nodeSelect = _nodesOsm[i];
+                rowNode["id"] = nodeSelect.Id;
+                rowNode["lat"] = nodeSelect.Latitude;
+                rowNode["lon"] = nodeSelect.Longtitude;
+                rowNode["times"] = nodeSelect.DateStamp;
                 _tableNodes.Rows.Add(rowNode);
-                //if (_nodesOsm[i].GeoType != null) ImportGeoNodesToDb(_nodesOsm[i]);
+                if (_nodesOsm[i].GeoType != null) ImportGeoNodesToDb(nodeSelect);
             }
             this.ImportDataTableInDb(ref _tableNodes, TablesTemplates.GetTableNodes);
             _nodesOsm.Clear();
