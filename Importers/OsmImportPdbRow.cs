@@ -7,6 +7,7 @@ using System.Text;
 using System.IO;
 using OsmImportToSqlServer.Config;
 using OsmImportToSqlServer.Helpers;
+using OsmImportToSqlServer.Helpers.Geo;
 using OsmImportToSqlServer.Helpers.Import;
 using OsmImportToSqlServer.Helpers.ReadPdb;
 using OsmImportToSqlServer.Importers.OsmImportPdbRowClasses;
@@ -517,21 +518,27 @@ namespace OsmImportToSqlServer.Importers
                 rowNode["lon"] = nodeSelect.Longtitude;
                 rowNode["times"] = nodeSelect.DateStamp;
                 _tableNodes.Rows.Add(rowNode);
-                if (_nodesOsm[i].GeoType != null) ImportGeoNodesToDb(nodeSelect);
+                if (_nodesOsm[i].GeoType != null) FillGeoNodesTable(nodeSelect);
             }
             this.ImportDataTableInDb(ref _tableNodes, TablesTemplates.GetTableNodes);
             _nodesOsm.Clear();
         }
 
         private DataTable _geos = TablesTemplates.GetTableGeo();
-        private void ImportGeoNodesToDb(Node node)
+        private void FillGeoNodesTable(Node node)
         {
             DataRow dataRow = _geos.NewRow();
             dataRow["idGeo"] = node.Id;
+            dataRow["bin"] = GeoProcessing.GeoProcessingNode(node);
             dataRow["typeGeo"] = (byte)GeoTypeOGC.Point;
             _geos.Rows.Add(dataRow);
+
+
+
             if (_geos.Rows.Count == COUNT_ROW) this.ImportDataTableInDb(ref _geos, TablesTemplates.GetTableGeo);
         }
+
+
 
         private void AddWay(WaySimple way)
         {
