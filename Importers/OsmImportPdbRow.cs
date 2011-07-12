@@ -283,7 +283,7 @@ namespace OsmImportToSqlServer.Importers
                     stamp = this.timeEpoche.AddSeconds(second);
                 }
                 long deltaref = 0;
-                
+
                 var way = new WaySimple(osmpbfWay.id, stamp);
                 for (int nodeRef = 0; nodeRef < osmpbfWay.refs.Count; nodeRef++)
                 {
@@ -538,7 +538,30 @@ namespace OsmImportToSqlServer.Importers
             if (_geos.Rows.Count == COUNT_ROW) this.ImportDataTableInDb(ref _geos, TablesTemplates.GetTableGeo);
         }
 
+        private void AddGeoToGeoTable(DataRow rowGeoTable)
+        {
+            _geos.Rows.Add(rowGeoTable);
+            if (_geos.Rows.Count > COUNT_ROW)
+            {
+                this.ImportGeoTableInDb();
+            }
+        }
 
+        private void ImportGeoTableInDb()
+        {
+            using (SqlConnection connection = new SqlConnection(_connectionString))
+            {
+                using (SqlCommand command = new SqlCommand("CreateGeoFromTableWKTBin"))
+                {
+                    SqlParameter geoTable = new SqlParameter("binwkt", _geos);
+                    geoTable.SqlDbType = SqlDbType.Udt;
+                    command.Parameters.Add(geoTable);
+
+                    connection.Open();
+                    command.ExecuteNonQuery();
+                }
+            }
+        }
 
         private void AddWay(WaySimple way)
         {
