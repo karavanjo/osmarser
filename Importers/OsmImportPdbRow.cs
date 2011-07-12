@@ -120,6 +120,7 @@ namespace OsmImportToSqlServer.Importers
         {
             if (_nodesOsm.Count > 0) ImportPrimitiveNodesToDb();
             if (_waysOsm.Count > 0) ImportPrimitiveWaysToDb();
+            if (_geos.Rows.Count > 0) ImportGeoTableInDb();
             if (_tagsValues.Rows.Count > 0) this.ImportDataTableInDb(ref _tagsValues, new GetTable(GetTableTagsValue));
         }
 
@@ -547,14 +548,26 @@ namespace OsmImportToSqlServer.Importers
         {
             using (SqlConnection connection = new SqlConnection(_connectionString))
             {
-                using (SqlCommand command = new SqlCommand("CreateGeoFromTableWKTBin"))
+                using (SqlCommand command = new SqlCommand("dbo.CreateGeoFromTableWKTBin", connection))
                 {
+                    command.CommandType = CommandType.StoredProcedure;
+
                     SqlParameter geoTable = new SqlParameter("binwkt", _geos);
-                    geoTable.SqlDbType = SqlDbType.Udt;
+                    //geoTable.SqlDbType = SqlDbType.Udt;
                     command.Parameters.Add(geoTable);
+
+                    // ----- DEBUG
+                    Helpers.Log.Log.Write("Start upload - GEO - "
+                        + " (" + _geos.Rows.Count + ")");
+                    // ------
 
                     connection.Open();
                     command.ExecuteNonQuery();
+
+                    // ----- DEBUG
+                    Helpers.Log.Log.Write("End upload - GEO - "
+                        + " (" + _geos.Rows.Count + ")");
+                    // ------
                 }
             }
         }
