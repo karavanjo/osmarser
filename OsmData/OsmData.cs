@@ -42,6 +42,13 @@ namespace OsmImportToSqlServer.OsmData
             base._dateStamp = dateTime;
         }
 
+        public Node(Int64 id)
+        {
+            base._id = id;
+            this._point = new Point() { Lat = 0.00, Lon = 0.00 };
+            base._dateStamp = DateTime.Now;
+        }
+
         public void GetLatLon(out double lat, out double lon)
         {
             lat = _point.Lat;
@@ -51,11 +58,13 @@ namespace OsmImportToSqlServer.OsmData
         public double Latitude
         {
             get { return _point.Lat; }
+            set { _point.Lat = value;  }
         }
 
         public double Longtitude
         {
             get { return _point.Lon; }
+            set { _point.Lon = value; }
         }
 
         private Point _point;
@@ -71,6 +80,13 @@ namespace OsmImportToSqlServer.OsmData
             base._id = id;
             this._nodes = new List<Node>();
             base._dateStamp = dateTime;
+        }
+
+        public Way(Int64 id)
+        {
+            base._id = id;
+            this._nodes = new List<Node>();
+            base._dateStamp = DateTime.Now;
         }
 
         public void AddNode(Node node)
@@ -100,9 +116,9 @@ namespace OsmImportToSqlServer.OsmData
 
     public class Relation : OsmPrimitive
     {
-        
+
     }
-    
+
 
     /// <summary>
     /// Class class describes the settings for importing geography object

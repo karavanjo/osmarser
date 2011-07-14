@@ -285,7 +285,7 @@ namespace OsmImportToSqlServer.Importers
                 }
                 long deltaref = 0;
 
-                var way = new WaySimple(osmpbfWay.id, stamp);
+                var way = new Way(osmpbfWay.id, stamp);
                 for (int nodeRef = 0; nodeRef < osmpbfWay.refs.Count; nodeRef++)
                 {
                     deltaref += osmpbfWay.refs[nodeRef];
@@ -340,7 +340,7 @@ namespace OsmImportToSqlServer.Importers
             }
         }
 
-        private GeoType WayIsPolygonOrLine(WaySimple way)
+        private GeoType WayIsPolygonOrLine(Way way)
         {
             if (way.IsPolygon())
             {
@@ -357,16 +357,16 @@ namespace OsmImportToSqlServer.Importers
         /// </summary>
         /// <param name="idNodeInWay"></param>
         /// <returns></returns>
-        private NodeSimple AddNodeSimpleToNodesRefs(Int64 idNodeInWay)
+        private Node AddNodeSimpleToNodesRefs(Int64 idNodeInWay)
         {
-            NodeSimple nodeSimple;
+            Node nodeSimple;
             if (_nodesRefs.TryGetValue(idNodeInWay, out nodeSimple))
             {
                 return nodeSimple;
             }
             else
             {
-                nodeSimple = new NodeSimple(idNodeInWay);
+                nodeSimple = new Node(idNodeInWay);
                 _nodesRefs.Add(idNodeInWay, nodeSimple);
                 return nodeSimple;
             }
@@ -519,14 +519,16 @@ namespace OsmImportToSqlServer.Importers
                 rowNode["lon"] = nodeSelect.Longtitude;
                 rowNode["times"] = nodeSelect.DateStamp;
                 _tableNodes.Rows.Add(rowNode);
-                if (_nodesOsm[i].GeoType != null) FillGeoNodesTable(nodeSelect);
+                if (_nodesOsm[i].GeoType != null) AddGeoNodeToTable(nodeSelect);
             }
             this.ImportDataTableInDb(ref _tableNodes, TablesTemplates.GetTableNodes);
             _nodesOsm.Clear();
         }
 
+
+
         private DataTable _geos = TablesTemplates.GetTableGeo();
-        private void FillGeoNodesTable(Node node)
+        private void AddGeoNodeToTable(Node node)
         {
             DataRow dataRow = _geos.NewRow();
             dataRow["idGeo"] = node.Id;
@@ -553,7 +555,6 @@ namespace OsmImportToSqlServer.Importers
                     command.CommandType = CommandType.StoredProcedure;
 
                     SqlParameter geoTable = new SqlParameter("binwkt", _geos);
-                    //geoTable.SqlDbType = SqlDbType.Udt;
                     command.Parameters.Add(geoTable);
 
                     // ----- DEBUG
@@ -572,7 +573,7 @@ namespace OsmImportToSqlServer.Importers
             }
         }
 
-        private void AddWay(WaySimple way)
+        private void AddWay(Way way)
         {
             _waysOsm.Add(way);
             if (_nodesRefs.Count > COUNT_ROW)
@@ -590,16 +591,23 @@ namespace OsmImportToSqlServer.Importers
             for (int w = 0; w < _waysOsm.Count; w++)
             {
                 DataRow rowWay = _tableWays.NewRow();
-                rowWay["id"] = _waysOsm[w].Id;
+                Way waySimple = _waysOsm[w];
+                rowWay["id"] = waySimple.Id;
                 if (_waysOsm[w].GeoType != null)
-                    rowWay["typeGeo"] = Convert.ToByte(_waysOsm[w].GeoType.GeoTypeOGC);
-                rowWay["times"] = _waysOsm[w].DateStamp;
+                {
+                    rowWay["typeGeo"] = Convert.ToByte(waySimple.GeoType.GeoTypeOGC);
+                }
+                rowWay["times"] = waySimple.DateStamp;
                 _tableWays.Rows.Add(rowWay);
-                ImportRefsWays(_waysOsm[w]);
+                ImportRefsWays(waySimple);
             }
+
+            this.ImportGeoWayToDb(_tableWaysRefs);
+
             this.ImportDataTableInDb(ref _tableWays, TablesTemplates.GetTableWays);
-            _waysOsm.Clear();
             this.ImportDataTableInDb(ref _tableWaysRefs, TablesTemplates.GetTableWaysRefs);
+            
+            _waysOsm.Clear();
             _nodesRefs.Clear();
         }
 
@@ -607,7 +615,7 @@ namespace OsmImportToSqlServer.Importers
         /// <summary>
         /// Imports WaysRefs in Sql Server
         /// </summary>
-        private void ImportRefsWays(WaySimple waySimple)
+        private void ImportRefsWays(Way waySimple)
         {
             int orderNode = 0;
             for (int i = 0; i < waySimple.Nodes.Count; i++)
@@ -618,6 +626,61 @@ namespace OsmImportToSqlServer.Importers
                 rowWayRefs["idNode"] = waySimple.Nodes[i].Id;
                 rowWayRefs["orders"] = orderNode;
                 _tableWaysRefs.Rows.Add(rowWayRefs);
+            }
+        }
+
+        private void ImportGeoWayToDb(DataTable nodesRefsAndWays)
+        {
+            this.FillCoordinateNodesForWays(nodesRefsAndWays);
+
+            for (int w = 0; w < _waysOsm.Count; w++)
+            {
+                DataRow rowWay = _tableWays.NewRow();
+                Way waySimple = _waysOsm[w];
+                rowWay["id"] = waySimple.Id;
+                if (_waysOsm[w].GeoType != null)
+                {
+                    rowWay["typeGeo"] = Convert.ToByte(waySimple.GeoType.GeoTypeOGC);
+                }
+                rowWay["times"] = waySimple.DateStamp;
+                _tableWays.Rows.Add(rowWay);
+                ImportRefsWays(waySimple);
+            }
+        }
+
+        private void FillCoordinateNodesForWays(DataTable nodesRefsAndWays)
+        {
+            using (SqlConnection connection = new SqlConnection(_connectionString))
+            {
+                using (SqlCommand command = new SqlCommand("dbo.GetNodesForWays", connection))
+                {
+                    command.CommandType = CommandType.StoredProcedure;
+
+                    SqlParameter geoTable = new SqlParameter("ways", nodesRefsAndWays);
+                    command.Parameters.Add(geoTable);
+
+                    // ----- DEBUG
+                    Helpers.Log.Log.Write("Start download data nodes for ways - "
+                        + " (" + _waysOsm.Count + ")");
+                    // ------
+
+                    connection.Open();
+                    SqlDataReader reader = command.ExecuteReader();
+
+                    while (reader.Read())
+                    {
+                        Node node = _nodesRefs[(Int64) reader["id"]];
+                        var lat = (double)reader["lat"];
+                        var lon = (double)reader["lon"];
+                        node.Latitude = (double)reader["lat"];
+                        node.Longtitude = (double)reader["lon"];
+                    }
+
+                    // ----- DEBUG
+                    Helpers.Log.Log.Write("End download data nodes for ways - "
+                        + " (" + _waysOsm.Count + ")");
+                    // ------
+                }
             }
         }
 
@@ -657,11 +720,11 @@ namespace OsmImportToSqlServer.Importers
         /// <summary>
         /// Stores nodesRefs
         /// </summary>
-        private Dictionary<Int64, NodeSimple> _nodesRefs = new Dictionary<long, NodeSimple>();
+        private Dictionary<Int64, Node> _nodesRefs = new Dictionary<long, Node>();
         /// <summary>
         /// Stores ways labeled as the storage of geography objects to the database
         /// </summary>
-        private List<WaySimple> _waysOsm = new List<WaySimple>();
+        private List<Way> _waysOsm = new List<Way>();
         /// <summary>
         /// DataTable which store tags and value for froup OsmPrimitive
         /// </summary>
