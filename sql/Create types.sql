@@ -8,8 +8,8 @@ GO
 
 CREATE TYPE dbo.nodeRefsWay AS TABLE
 (
-nodesId bigint NOT NULL,
-wayId bigint NOT NULL,
+idWay bigint NOT NULL,
+idNode bigint NOT NULL,
 orders int NOT NULL
 )
 GO
